@@ -1,0 +1,16 @@
+<resources>
+    <string name="app_name">simmaApp</string>
+    <string name="title_activity_home">HomeActivity</string>
+    <string name="title_activity_web_view_page">webViewPage</string>
+    <string name="title_activity_registration">RegistrationActivity</string>
+    <string name="title_activity_login">LoginActivity</string>
+    <string name="processing">Processing</string>
+    <string name="confirmed">Confirmed</string>
+    <string name="delivered">Delivered</string>
+    <string name="cancelled">Cancelled</string>
+    <string name="outForDelivery">Out For Delivery</string>
+    <string name="paymentRejected">Payment Rejected</string>
+    <string name="pendingPayment">Pending Payment</string>
+    <string name="onHold">On Hold</string>
+    <string name="title_activity_basic_two_language_text_field">BasicTwoLanguageTextField</string>
+</resources>
