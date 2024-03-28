@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "645992900431",
+    "project_id": "simmastagingfirebase",
+    "storage_bucket": "simmastagingfirebase.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:645992900431:android:b48e75ba3623987c35c73a",
+        "android_client_info": {
+          "package_name": "com.example.fcmtest"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDAEKooLgFM5XewK57zaoP5nAaeIi4X3Tg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:645992900431:android:70ea8c527c58537535c73a",
+        "android_client_info": {
+          "package_name": "com.simma.simmaapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDAEKooLgFM5XewK57zaoP5nAaeIi4X3Tg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

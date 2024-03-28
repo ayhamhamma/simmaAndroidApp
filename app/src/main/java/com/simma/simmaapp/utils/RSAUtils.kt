@@ -47,7 +47,6 @@ object RSAUtils{
         return keyFactory.generatePrivate(keySpec)
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     fun getPublicKeyFromString(publicKeyString: String): PublicKey {
         val keyFactory = KeyFactory.getInstance("RSA")
         val keySpec = X509EncodedKeySpec(Base64.getDecoder().decode(publicKeyString))

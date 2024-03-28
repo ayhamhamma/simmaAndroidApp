@@ -7,6 +7,7 @@ plugins {
     id("com.google.dagger.hilt.android")
 //    id("com.google.devtools.ksp") version "1.9.0-1.0.13"
     kotlin("plugin.serialization") version "1.5.21"
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -53,6 +54,7 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+
 }
 // Allow references to generated code
 
@@ -73,11 +75,16 @@ dependencies {
     implementation(platform("androidx.compose:compose-bom:2023.08.00"))
     implementation("androidx.navigation:navigation-compose:2.7.6")
     implementation(platform("androidx.compose:compose-bom:2023.08.00"))
+    implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
+//    implementation("com.google.firebase:firebase-auth:22.3.1")
+    implementation("androidx.test:core-ktx:1.5.0")
+    implementation(platform("androidx.compose:compose-bom:2023.08.00"))
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
     androidTestImplementation(platform("androidx.compose:compose-bom:2023.08.00"))
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
+    androidTestImplementation(platform("androidx.compose:compose-bom:2023.08.00"))
     androidTestImplementation(platform("androidx.compose:compose-bom:2023.08.00"))
     androidTestImplementation(platform("androidx.compose:compose-bom:2023.08.00"))
     androidTestImplementation(platform("androidx.compose:compose-bom:2023.08.00"))
@@ -109,6 +116,38 @@ dependencies {
     implementation ("androidx.navigation:navigation-compose:2.7.6")
     implementation("com.airbnb.android:lottie-compose:4.0.0")
     implementation ("com.github.BILLyTheLiTTle:LazyColumns:0.3.7")
+    // biometric
+    implementation ("androidx.biometric:biometric:1.1.0")
+
+    // kochava
+    implementation("com.kochava.tracker:tracker:5.3.0")
+    implementation ("com.google.android.gms:play-services-ads-identifier:18.0.1")
+    implementation ("com.android.installreferrer:installreferrer:2.2")
+    implementation ("com.google.android.gms:play-services-appset:16.0.2")
+
+    // UXCam
+    implementation ("com.uxcam:uxcam:3.6.21")
+
+    // firebase
+    implementation(platform("com.google.firebase:firebase-bom:32.7.4"))
+    implementation("com.google.firebase:firebase-analytics")
+
+    // constrainLayout
+    implementation("androidx.constraintlayout:constraintlayout:2.2.0-alpha13")
+    // To use constraintlayout in compose
+    implementation("androidx.constraintlayout:constraintlayout-compose:1.1.0-alpha13")
+    // circular image view
+    implementation ("de.hdodenhof:circleimageview:3.1.0")
+
+    // firebase messaging
+    implementation("com.google.firebase:firebase-messaging:23.4.1")
+    implementation ("com.google.firebase:firebase-messaging-directboot:23.4.1")
+
+    // tab layout and view pager
+    implementation("com.google.accompanist:accompanist-pager:0.21.0-beta")
+    implementation("com.google.accompanist:accompanist-pager-indicators:0.21.0-beta")
+
+
 }
 kapt {
     correctErrorTypes = true

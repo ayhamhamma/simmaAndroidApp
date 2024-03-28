@@ -8,10 +8,10 @@
             <InsightsFilterSettings>
               <option name="connection">
                 <ConnectionSetting>
-                  <option name="appId" value="PLACEHOLDER" />
-                  <option name="mobileSdkAppId" value="" />
-                  <option name="projectId" value="" />
-                  <option name="projectNumber" value="" />
+                  <option name="appId" value="com.simma.simmaapp" />
+                  <option name="mobileSdkAppId" value="1:645992900431:android:70ea8c527c58537535c73a" />
+                  <option name="projectId" value="simmastagingfirebase" />
+                  <option name="projectNumber" value="645992900431" />
                 </ConnectionSetting>
               </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />

@@ -2,5 +2,5 @@ package com.simma.simmaapp.model.myOrdersModel
 
 data class CommissionX(
     val type: String,
-    val value: Int
+    val value: Double
 )

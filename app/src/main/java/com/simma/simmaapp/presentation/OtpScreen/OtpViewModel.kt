@@ -10,11 +10,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.simma.simmaapp.presentation.theme.ActiveResendCodeColor
+import com.simma.simmaapp.presentation.theme.InActiveResendCodeColor
 import com.simma.simmaapp.remote.Repository
 import com.simma.simmaapp.utils.Constants
 import com.simma.simmaapp.utils.Constants.PHONE_NUMBER
 import com.simma.simmaapp.utils.Encryption
 import com.simma.simmaapp.utils.Helpers
+import com.simma.simmaapp.utils.Helpers.getSelectedCurrency
 import com.simma.simmaapp.utils.Helpers.getToken
 import com.simma.simmaapp.utils.Helpers.setToken
 import com.simma.simmaapp.utils.Helpers.setUserId
@@ -40,24 +43,30 @@ class OtpViewModel @Inject constructor(
     var otpText = mutableStateListOf("", "", "", "", "", "")
     private val _timerState = MutableStateFlow("45")
     val timerState: StateFlow<String> = _timerState
-
+    var resendColor by mutableStateOf(InActiveResendCodeColor)
     private var timerJob: Job? = null
+     var resendIsActive by mutableStateOf(false)
 
     init {
-        checkUserExistence()
         startTimer()
     }
 
     private fun startTimer() {
         timerJob = viewModelScope.launch {
+
             for (i in 45 downTo 0) {
                 if (i >= 10) {
                     _timerState.value = i.toString()
                     delay(1000)
                 } else {
                     _timerState.value = "0${i}"
+                    delay(1000)
                 }
             }
+            resendColor = ActiveResendCodeColor
+            resendIsActive = true
+
+
         }
     }
 
@@ -66,27 +75,11 @@ class OtpViewModel @Inject constructor(
         otpText[index] = value
     }
 
-    private fun checkUserExistence() {
-        viewModelScope.launch {
-            repository.checkUserExistence(phoneNumber = PHONE_NUMBER).collect { result ->
-                when (result) {
-                    is Resource.Success -> {
-                        termsAndConditionsState = result.data
-                    }
 
-                    is Resource.Error -> {
-                        // not implemented
-                    }
-
-                    is Resource.Loading -> {
-                        // not implemented
-                    }
-                }
-            }
-        }
-    }
 
     fun resendOTP(context:Context) {
+        resendColor = InActiveResendCodeColor
+        resendIsActive = false
         // Cancel the existing timer job
         timerJob?.cancel()
         // Reset OTP text
@@ -95,7 +88,7 @@ class OtpViewModel @Inject constructor(
         startTimer()
 
         // Call API
-        val encryptedPhoneNumber = Encryption.encryptData("{\"phoneNumber\" :\"+962$PHONE_NUMBER\" }")
+        val encryptedPhoneNumber = Encryption.encryptData("{\"phoneNumber\" :\"+${getSelectedCurrency(appContext)}${Constants.PHONE_NUMBER_RESEND}\" }")
         viewModelScope.launch {
             repository.sendOtp(encryptedPhoneNumber).collect{
                     result ->

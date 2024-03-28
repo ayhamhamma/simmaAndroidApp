@@ -6,9 +6,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.NavController
 import com.simma.simmaapp.model.citiesModel.CitiesModelItem
 import com.simma.simmaapp.model.updateProfile.Address
 import com.simma.simmaapp.model.updateProfile.UpdateProfileRequestBody
+import com.simma.simmaapp.presentation.homeScreen.HomeScreens
 import com.simma.simmaapp.remote.Repository
 import com.simma.simmaapp.utils.Helpers
 import com.simma.simmaapp.utils.Helpers.showMessage
@@ -28,6 +30,7 @@ class ProfileScreenViewModel @Inject constructor(
     var deliveryCityName by mutableStateOf("City")
     var citiesList by mutableStateOf<List<CitiesModelItem>>(emptyList())
     var isFirstNameError by mutableStateOf(false)
+    var isLastNameError by mutableStateOf(false)
     var isCityError by mutableStateOf(false)
     var isAddressError by mutableStateOf(false)
     var nameText by mutableStateOf("")
@@ -36,6 +39,9 @@ class ProfileScreenViewModel @Inject constructor(
     var dateOfBirthText by mutableStateOf("")
     var emailText by mutableStateOf("")
     var addressText by mutableStateOf("")
+    var lastName by mutableStateOf("")
+    var isLoading by mutableStateOf(true)
+    var isButtonLoading by mutableStateOf(false)
 
 
 
@@ -52,8 +58,8 @@ class ProfileScreenViewModel @Inject constructor(
                         nameText = result.data.firstName
                         phoneText = result.data.phoneNumber
                         emailText = result.data.email
-                        addressText = result.data.address.addressDetails
-                        if (citiesList.isNotEmpty()) {
+                        addressText = result.data.address?.addressDetails ?: ""
+                        if (citiesList.isNotEmpty() &&result.data.address != null) {
                             deliveryCityName = citiesList.first {
                                 it.id == result.data.address.cityId
                             }.name.en
@@ -61,14 +67,14 @@ class ProfileScreenViewModel @Inject constructor(
                                 it.id == result.data.address.cityId
                             }.id
                         }
+                        lastName = result.data.lastName
                     }
 
                     is Resource.Error -> {
-                        Unit
                     }
 
                     is Resource.Loading -> {
-                        Unit
+                        isLoading = result.isLoading
                     }
                     else->{
 
@@ -102,12 +108,16 @@ class ProfileScreenViewModel @Inject constructor(
         }
     }
 
-    fun onSaveClick() {
+    fun onSaveClick(navController: NavController) {
         isFirstNameError = false
         isAddressError = false
         isCityError = false
         if (nameText.isEmpty() || nameText.isBlank()) {
             isFirstNameError = true
+            return
+        }
+        if (lastName.isEmpty() || lastName.isBlank()) {
+            isLastNameError = true
             return
         }
         if (deliveryCity.isEmpty() || deliveryCity.isBlank()) {
@@ -118,13 +128,14 @@ class ProfileScreenViewModel @Inject constructor(
             isAddressError = true
             return
         }
-        callAPI()
+
+        callAPI(navController)
     }
 
-    private fun callAPI() {
+    private fun callAPI(navController: NavController) {
         val data = UpdateProfileRequestBody(
             firstName = nameText,
-            lastName = nameText,
+            lastName = lastName,
             language = "ar",// todo change this
             email = if (emailText.isEmpty() || emailText.isBlank()) null else emailText,
             address = Address(
@@ -137,6 +148,12 @@ class ProfileScreenViewModel @Inject constructor(
             repository.updateProfile(data, token).collect { result ->
                 when (result) {
                     is Resource.Success -> {
+                        // Navigate to HomeScreen and pop all screens from the back stack
+                        navController.navigate(HomeScreens.HomeScreen.route){
+                            popUpTo(HomeScreens.HomeScreen.route){
+                                inclusive = true
+                            }
+                        }
                         showMessage(appContext, "Profile updated successfully")
                     }
 
@@ -145,7 +162,7 @@ class ProfileScreenViewModel @Inject constructor(
                     }
 
                     is Resource.Loading -> {
-                        Unit
+                        isButtonLoading = result.isLoading
                     }
                     else->{
 

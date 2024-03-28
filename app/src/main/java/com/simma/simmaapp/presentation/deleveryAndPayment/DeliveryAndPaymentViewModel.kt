@@ -8,6 +8,8 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.simma.simmaapp.model.citiesModel.CitiesModelItem
+import com.simma.simmaapp.presentation.homePage.HomeActivity
+import com.simma.simmaapp.presentation.homePage.HomePage
 import com.simma.simmaapp.remote.Repository
 import com.simma.simmaapp.utils.Constants
 import com.simma.simmaapp.utils.Constants.CART_GRAND_TOTAL
@@ -16,6 +18,7 @@ import com.simma.simmaapp.utils.Constants.DELIVERY_CITY_NAME
 import com.simma.simmaapp.utils.Constants.DELIVERY_DETAILED_ADDRESS
 import com.simma.simmaapp.utils.Constants.DELIVERY_FEES
 import com.simma.simmaapp.utils.Constants.DISCOUNTS_LIST
+import com.simma.simmaapp.utils.Constants.PAYMENT_METHODS
 import com.simma.simmaapp.utils.Constants.USER_WALLET
 import com.simma.simmaapp.utils.Constants.WALLET_FREE_SHIPPING
 import com.simma.simmaapp.utils.Constants.WALLET_SELECTED
@@ -40,11 +43,14 @@ class DeliveryAndPaymentViewModel @Inject constructor(
     var deliveryFees by mutableStateOf(
         "0"
     )
+    var noPaymentMethodSelected by mutableStateOf(
+        true
+    )
     var deliveryCity = ""
     var deliveryCityName by mutableStateOf("City")
 
     var deliveryAddress by mutableStateOf("")
-    var walletBalance by mutableStateOf("")
+    var walletBalance by mutableStateOf("10000000.0")
     var isWalletFrozen by mutableStateOf(false)
     var showPopup by mutableStateOf(false)
     var walletDiscountShow by mutableStateOf(false)
@@ -133,16 +139,16 @@ class DeliveryAndPaymentViewModel @Inject constructor(
     fun saveDeliveryData(): Boolean {
 
         if (deliveryCity.isEmpty()) {
-            Toast.makeText(
-                appContext,
-                "Please choose City",
-                Toast.LENGTH_LONG
-            ).show()
+            HomeActivity.showToast(false,"Please choose City")
             return false
         }
 
         if (deliveryAddress.isEmpty()) {
             isDetailedAddressError = true
+            return false
+        }
+        if(noPaymentMethodSelected){
+            HomeActivity.showToast(false,"Choose a payment method")
             return false
         }
 
@@ -151,13 +157,10 @@ class DeliveryAndPaymentViewModel @Inject constructor(
             return false
         }
         if (WALLET_SELECTED && walletBalance.toDouble() < CART_GRAND_TOTAL.toDouble()) {
-            Toast.makeText(
-                appContext,
-                "You don't have enough credit in your wallet. Please choose a different payment method or charge your wallet",
-                Toast.LENGTH_LONG
-            ).show()
+            HomeActivity.showToast(false,"You don't have enough credit in your wallet. Please choose a different payment method or charge your wallet")
             return false
         }
+
 
         DELIVERY_CITY = deliveryCity
         DELIVERY_CITY_NAME = deliveryCityName

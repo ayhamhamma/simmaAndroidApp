@@ -2,14 +2,27 @@
 <project version="4">
   <component name="deploymentTargetDropDown">
     <value>
-      <entry key="DeliveryAndPaymentScreen">
+      <entry key="LoginWithPasswordScreen">
         <State />
       </entry>
-      <entry key="HalfEye">
+      <entry key="SetUpPassword">
         <State />
       </entry>
-      <entry key="LoginScreen">
-        <State />
+      <entry key="TermsAndConditionsScreen">
+        <State>
+          <targetSelectedWithDropDown>
+            <Target>
+              <type value="QUICK_BOOT_TARGET" />
+              <deviceKey>
+                <Key>
+                  <type value="VIRTUAL_DEVICE_PATH" />
+                  <value value="$USER_HOME$/.android/avd/Pixel_2_API_UpsideDownCakePrivacySandbox.avd" />
+                </Key>
+              </deviceKey>
+            </Target>
+          </targetSelectedWithDropDown>
+          <timeTargetWasSelectedWithDropDown value="2024-03-24T12:26:32.911217Z" />
+        </State>
       </entry>
       <entry key="app">
         <State>
@@ -24,22 +37,8 @@
               </deviceKey>
             </Target>
           </targetSelectedWithDropDown>
-          <timeTargetWasSelectedWithDropDown value="2024-02-19T12:57:02.259828Z" />
-          <runningDeviceTargetsSelectedWithDialog>
-            <Target>
-              <type value="RUNNING_DEVICE_TARGET" />
-              <deviceKey>
-                <Key>
-                  <type value="SERIAL_NUMBER" />
-                  <value value="adb-0680825157102965-Do8GKF._adb-tls-connect._tcp." />
-                </Key>
-              </deviceKey>
-            </Target>
-          </runningDeviceTargetsSelectedWithDialog>
+          <timeTargetWasSelectedWithDropDown value="2024-03-25T11:05:53.099049Z" />
         </State>
-      </entry>
-      <entry key="testScreen">
-        <State />
       </entry>
     </value>
   </component>

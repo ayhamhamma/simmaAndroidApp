@@ -17,3 +17,5 @@ data class PlaceOrderNoCouponRequestBody(
     val paymentMethod: String,
     val otpToken : String? = null
 )
+
+

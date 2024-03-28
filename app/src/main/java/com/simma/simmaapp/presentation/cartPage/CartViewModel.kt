@@ -1,6 +1,7 @@
 package com.simma.simmaapp.presentation.cartPage
 
 import android.content.Context
+import android.util.Log
 import android.util.Log.e
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -9,10 +10,8 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.simma.simmaapp.model.applyDiscountCode.ApplyDiscountModel
-import com.simma.simmaapp.model.cartResponseModel.CartViewResponseModel
 import com.simma.simmaapp.model.cartResponseModel.DiscountOption
 import com.simma.simmaapp.model.cartResponseModel.Item
-import com.simma.simmaapp.model.getWallet.GetMyWalletModel
 import com.simma.simmaapp.presentation.theme.DarkBlue
 import com.simma.simmaapp.remote.Repository
 import com.simma.simmaapp.utils.Constants
@@ -31,14 +30,14 @@ import com.simma.simmaapp.utils.Constants.DISCOUNTS_LIST
 import com.simma.simmaapp.utils.Constants.DISCOUNT_CODE
 import com.simma.simmaapp.utils.Constants.DISCOUNT_CODE_AMOUNT
 import com.simma.simmaapp.utils.Constants.DISCOUNT_NAME
-import com.simma.simmaapp.utils.Constants.EXTRACTION_DATA
+//import com.simma.simmaapp.utils.Constants.EXTRACTION_DATA
 import com.simma.simmaapp.utils.Constants.IS_FREE_SHIPPING_CHECKED
 import com.simma.simmaapp.utils.Constants.PAYMENT_METHODS
-import com.simma.simmaapp.utils.Constants.SHOP_ID
 import com.simma.simmaapp.utils.Constants.USER_WALLET
 import com.simma.simmaapp.utils.Constants.WALLET_FREE_SHIPPING
 import com.simma.simmaapp.utils.Constants.WALLET_SELECTED
 import com.simma.simmaapp.utils.Helpers
+import com.simma.simmaapp.utils.Helpers.getToken
 import com.vs.simma.model.listingModel.PaymentMethod
 import com.vs.simma.model.listingModel.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -46,6 +45,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -74,8 +74,22 @@ class CartViewModel @Inject constructor(
 
 
     init {
-        getData(SHOP_ID, EXTRACTION_DATA)
         getMyWallet()
+        CART_RESPONSE?.let { result ->
+            listState = result.items
+            var numberOfItemsDouble = 0.0
+            listState.forEach {
+                numberOfItemsDouble += it.quantity
+            }
+            numberOfItems = numberOfItemsDouble.toString()
+            totalInsight = result.paymentDetails.IQDTotal.toString()
+            shipping = result.paymentDetails.IQDShippingCost.toString()
+            globalGrandTotal = result.paymentDetails.IQDGrandTotal.toString()
+
+            // just make sure the list is the same as the API
+            Constants.DISCOUNTS_LIST = result.discountOptions
+            isDataFetched.value = true
+        }
 
         // state flow combine operator is used to combine two flows so that any emission from any flow will trigger
         // this three line of code
@@ -119,34 +133,6 @@ class CartViewModel @Inject constructor(
         }
     }
 
-    fun getData(id: String, json: Map<String, Any>) {
-        viewModelScope.launch {
-            repository.getCart(id, json).collect { result ->
-                when (result) {
-                    is Resource.Success -> {
-                        CART_RESPONSE = result.data
-                        listState = result.data.items
-                        numberOfItems = listState.size.toString()
-                        totalInsight = result.data.paymentDetails.IQDTotal.toString()
-                        shipping = result.data.paymentDetails.IQDShippingCost.toString()
-                        globalGrandTotal = result.data.paymentDetails.IQDGrandTotal.toString()
-
-                        // just make sure the list is the same as the API
-                        DISCOUNTS_LIST = result.data.discountOptions
-                        isDataFetched.value = true
-
-                    }
-
-                    is Resource.Error ->
-                        Unit
-
-                    is Resource.Loading ->
-                        Unit
-
-                }
-            }
-        }
-    }
 
     fun applyDiscount() {
         val data = ApplyDiscountModel(
@@ -154,8 +140,9 @@ class CartViewModel @Inject constructor(
             CART_RESPONSE!!,
             discountText
         )
+        val token = getToken(appContext)
         viewModelScope.launch {
-            repository.applyDiscount(data).collect { result ->
+            repository.applyDiscount(data,token).collect { result ->
                 when (result) {
                     is Resource.Success -> {
                         if (result.data.isValid) {
@@ -195,14 +182,13 @@ class CartViewModel @Inject constructor(
     }
 
 
-
     private fun calculateGrandTotal(isChecked: Boolean, applyDiscountCode: Boolean) {
         viewModelScope.launch {
             if (isChecked) {
                 // add wallet free shipping
                 // remove payment methods discount
                 val newDiscounts = mutableListOf<DiscountOption>()
-                e("ayham", DISCOUNTS_LIST.toString() )
+                e("ayham", DISCOUNTS_LIST.toString())
                 DISCOUNTS_LIST.forEach {
                     if (it.category == "paymentMethods") {
                         return@forEach
@@ -225,7 +211,7 @@ class CartViewModel @Inject constructor(
                 // remove wallet free shipping
                 // remove payment method free shipping
                 val newDiscounts = mutableListOf<DiscountOption>()
-                e("ayham", DISCOUNTS_LIST.toString() )
+                e("ayham", DISCOUNTS_LIST.toString())
                 DISCOUNTS_LIST.forEach {
                     if (it.code == "walletFreeShipping") {
                         return@forEach
@@ -274,8 +260,8 @@ class CartViewModel @Inject constructor(
         DISCOUNT_NAME = ""
         DISCOUNT_CODE_AMOUNT = ""
         APPLY_DISCOUNT.value = false
-        EXTRACTION_DATA = mapOf<String,Any>()
-//        PAYMENT_METHODS = listOf<PaymentMethod>()
+//        EXTRACTION_DATA .update {  mapOf<String, Any>() }
+        PAYMENT_METHODS = listOf()
         DELIVERY_CITY = ""
         DELIVERY_CITY_NAME = ""
         DELIVERY_DETAILED_ADDRESS = ""
@@ -285,7 +271,6 @@ class CartViewModel @Inject constructor(
         CART_SHIPPING_FEES = ""
         CART_GRAND_TOTAL = ""
         CART_PRODUCT_LIST = listOf<Item>()
-        WALLET_SELECTED = true
         CART_RESPONSE = null
         DISCOUNTS_LIST = listOf<DiscountOption>()
         APPLY_DISCOUNT = MutableStateFlow(false)
@@ -293,7 +278,7 @@ class CartViewModel @Inject constructor(
         DISCOUNT_CODE_AMOUNT = ""
         WALLET_FREE_SHIPPING = 0
         IS_FREE_SHIPPING_CHECKED = MutableStateFlow(true)
-        USER_WALLET  = null
+        USER_WALLET = null
         DISCOUNT_CODE = ""
         super.onCleared()
     }

@@ -22,7 +22,7 @@ data class Result(
     val deals: List<Deal>,
     val demoMode: Boolean,
     val discounts: List<Any>,
-    val extraDeliveryPerItem: Int,
+    val extraDeliveryPerItem: Double,
     val extraDeliveryPerOrder: Int,
     val extractionCode: String,
     val extractionPrice: String,
@@ -44,5 +44,7 @@ data class Result(
     val storeAbbreviation: String,
     val translation: Boolean,
     val updatedAt: String,
-    val url: String
+    val url: String,
+    val cartCode : String,
+    val subCategorys : List<String>
 )

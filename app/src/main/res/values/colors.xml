@@ -8,6 +8,7 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
     <color name="babyBlue">#FFDCEDFF</color>
+    <color name="babyBlue1">#ffB7D2F7</color>
     <color name="statusAndNavigation">#FFF3F3F3</color>
     <color name="statusAndNavigationDialog">#c2c2c2</color>
 </resources>

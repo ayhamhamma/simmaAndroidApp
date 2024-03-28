@@ -62,6 +62,7 @@ import com.simma.simmaapp.R
 import com.simma.simmaapp.model.getInquiryCategoriesModel.InquiriesCategoriesItem
 import com.simma.simmaapp.presentation.homePage.HomeActivity
 import com.simma.simmaapp.presentation.homePage.ui.theme.Yellow
+import com.simma.simmaapp.presentation.loginScreen.LoginActivity
 import com.simma.simmaapp.presentation.theme.CheckoutAppBarColor
 import com.simma.simmaapp.presentation.theme.Dimen.PADDING
 import com.simma.simmaapp.presentation.theme.DropDownTextColor
@@ -74,6 +75,7 @@ fun SendInquiryScreen(navController: NavController) {
     var isExposed by remember {
         mutableStateOf(false)
     }
+    val context = LocalContext.current
     val viewModel: SendInquiryViewModel = hiltViewModel()
     Box(
         Modifier
@@ -123,7 +125,7 @@ fun SendInquiryScreen(navController: NavController) {
             Modifier
                 .fillMaxWidth()
                 .padding(start = PADDING, end = PADDING, top = 259.dp), "Send") {
-            viewModel.sendInquiry(navController)
+            viewModel.sendInquiry(navController, context)
 
         }
         CustomExposedDropDownMenu(
@@ -354,7 +356,12 @@ fun AppBar() {
                         interactionSource = interactionSource,
                         indication = null
                     ) {
-                        (context as HomeActivity).onBackPressedDispatcher.onBackPressed()
+                        try {
+                            (context as HomeActivity).onBackPressedDispatcher.onBackPressed()
+                        }catch (e:ClassCastException){
+                            (context as LoginActivity).onBackPressedDispatcher.onBackPressed()
+                        }
+
                     },
                 tint = MedDarkGrey
             )

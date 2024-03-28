@@ -20,12 +20,12 @@ data class PlaceOrderResponse(
     val orderNumber: String,
     val paymentDetails: PaymentDetails,
     val paymentMethod: String,
-    val shippingCost: Int,
+    val shippingCost: Double,
     val status: String,
     val statusUpdates: List<Any>,
     val total: Double,
     val transactions: List<Transaction>,
-    val unitShipmentFee: Int,
+    val unitShipmentFee: Double,
     val updatedAt: String,
     val userId: String
 )

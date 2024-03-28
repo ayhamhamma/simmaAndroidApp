@@ -10,7 +10,7 @@ data class Item(
     val name: String,
     val originalUnitPrice: Double,
     val price: Double,
-    val quantity: Int,
+    val quantity: Double,
     val size: String,
     val sizeVariants: List<String>,
     val sku: String,

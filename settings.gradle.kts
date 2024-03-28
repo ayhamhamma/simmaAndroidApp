@@ -11,6 +11,10 @@ dependencyResolutionManagement {
         google()
         mavenCentral()
         maven(url = "https://jitpack.io")
+        maven(
+            url =  "https://sdk.uxcam.com/android/"
+        )
+
     }
 }
 

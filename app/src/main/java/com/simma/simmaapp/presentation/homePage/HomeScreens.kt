@@ -60,6 +60,9 @@ sealed class HomeScreens(
     object SendInquiryScreen : HomeScreens("SendInquiryScreen")
     object ContactUsScreen : HomeScreens("ContactUsScreen")
     object FrequentlyAskedQuestions : HomeScreens("FrequentlyAskedQuestions")
+    object OrderDetailsScreen : HomeScreens("OrderDetailsScreen")
+    object HelpCenterScreen : HomeScreens("HelpCenterScreen")
+    object StoreInfoScreen : HomeScreens("StoreInfoScreen")
 
 
 }

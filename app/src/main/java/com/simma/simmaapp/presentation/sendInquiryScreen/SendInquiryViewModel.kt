@@ -10,7 +10,10 @@ import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
 import com.simma.simmaapp.model.getInquiryCategoriesModel.InquiriesCategoriesItem
 import com.simma.simmaapp.model.sendInquiry.SendInquiryRequestBody
+import com.simma.simmaapp.presentation.homePage.HomeActivity
 import com.simma.simmaapp.presentation.homeScreen.HomeScreens
+import com.simma.simmaapp.presentation.loginScreen.LoginActivity
+import com.simma.simmaapp.presentation.loginScreen.Screen
 import com.simma.simmaapp.remote.Repository
 import com.simma.simmaapp.utils.Helpers.getToken
 import com.simma.simmaapp.utils.Helpers.getUserId
@@ -63,13 +66,14 @@ class SendInquiryViewModel @Inject constructor (
         }
     }
 
-    fun sendInquiry(navController: NavController){
+    fun sendInquiry(navController: NavController, loginContext: Context? = null){
         if(state.inquiryQuestionText.isEmpty() || state.inquiryQuestionText.isBlank()){
             state = state.copy(isTextBoxError = true)
             return
         }
         if(state.selectedCategoryId.isEmpty()|| state.selectedCategoryId.isBlank()){
-            showMessage(context,"Please Choose Inquiry Category.")
+            HomeActivity.showToast(false,"Please Select inquiry option")
+            LoginActivity.showToast(false,"Please Select inquiry option")
             return
         }
         viewModelScope.launch {
@@ -78,11 +82,18 @@ class SendInquiryViewModel @Inject constructor (
                 result ->
                 when (result) {
                     is Resource.Success -> {
-                        showMessage(context,"Your inquiry was received successfully. Our staff will be in contact with you.")
-                        navController.popBackStack()
-                        navController.popBackStack()
-                        navController.popBackStack()
-                        navController.navigate(HomeScreens.HomeScreen.route)
+                        HomeActivity.showToast(true,"Your inquiry was received successfully. Our staff will be in contact with you.")
+                        LoginActivity.showToast(true,"Your inquiry was received successfully. Our staff will be in contact with you.")
+
+                        try{
+                            navController.navigate(HomeScreens.HomeScreen.route){
+                                popUpTo(HomeScreens.HomeScreen.route){
+                                    inclusive = true
+                                }
+                            }
+                        }catch (e:Exception){
+                            (loginContext as LoginActivity).onBackPressedDispatcher.onBackPressed()
+                        }
                     }
 
                     is Resource.Error ->

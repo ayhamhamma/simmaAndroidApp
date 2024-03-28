@@ -1,7 +1,7 @@
 package com.simma.simmaapp.model.myOrdersModel
 
 data class Merchant(
-    val __v: Int,
+    val __v: Double,
     val _id: String,
     val cartUrl: String,
     val categorys: List<String>,
@@ -14,22 +14,23 @@ data class Merchant(
     val deals: List<Deal>,
     val demoMode: Boolean,
     val discounts: List<Discount>,
-    val extraDeliveryPerItem: Int,
+    val extraDeliveryPerItem: Double,
     val extractionCode: String,
     val id: String,
     val image: Image,
     val isCommissionElligible: Boolean,
     val isWoocommerce: Boolean,
-    val maximumDaysToDeliver: Int,
-    val minimumDaysToDeliver: Int,
+    val maximumDaysToDeliver: Double,
+    val minimumDaysToDeliver: Double,
     val name: Name,
     val onLoadCompleteCode: String,
     val paymentMethods: List<PaymentMethod>,
-    val rank: Int,
+    val rank: Double,
     val scraperCodes: ScraperCodes,
     val status: String,
     val storeAbbreviation: String,
     val translation: Boolean,
     val updatedAt: String,
-    val url: String
+    val url: String,
+    val cartCode : String
 )

@@ -1,16 +1,24 @@
 package com.vs.simma.api
 
 import com.google.gson.JsonObject
+import com.simma.simmaapp.model.CancelOrderOrItem.CancelOrderItem
+import com.simma.simmaapp.model.advertismentResponse.AdvertismentResponse
 import com.simma.simmaapp.model.applyDiscountCode.ApplyDiscountCodeResponse
 import com.simma.simmaapp.model.applyDiscountCode.ApplyDiscountModel
 import com.simma.simmaapp.model.cartResponseModel.CartViewResponseModel
 import com.simma.simmaapp.model.citiesModel.CitiesModel
 import com.simma.simmaapp.model.frequentlyAskedModel.FrequentlyAskedQuestionsModel
+import com.simma.simmaapp.model.getConfigsModel.GetConfigsModel
 import com.simma.simmaapp.model.getInquiryCategoriesModel.InquiriesCategories
 import com.simma.simmaapp.model.getWallet.GetMyWalletModel
+import com.simma.simmaapp.model.isUserExist.IsUserExistModel
+import com.simma.simmaapp.model.loginModel.LoginModel
 import com.simma.simmaapp.model.myOrdersModel.MyOrdersModel
+import com.simma.simmaapp.model.myOrdersModel.MyOrdersResultData
+import com.simma.simmaapp.model.passwordResponse.SetPasswordResponse
 import com.simma.simmaapp.model.sendInquiry.SendInquiryModel
 import com.simma.simmaapp.model.sendInquiry.SendInquiryRequestBody
+import com.simma.simmaapp.model.setPasswordRequestBody.SetPasswordRequestBody
 import com.simma.simmaapp.model.updateProfile.UpdateProfileRequestBody
 import com.simma.simmaapp.model.updateProfile.UpdateProfileResponse
 import com.vs.simma.model.auth.SendOtpRequestBody
@@ -49,7 +57,7 @@ interface ApiServices {
     @GET("api/v1/users/exists")
     suspend fun checkUserExistence(
         @Query("phoneNumber") phoneNumber: String
-    ): Response<Boolean>
+    ): Response<IsUserExistModel>
 
     @Headers("Content-Type: application/json")
     @POST("api/v1/simmaAuthentication/authenticate")
@@ -116,7 +124,8 @@ interface ApiServices {
     @Headers("Content-Type: application/json")
     @POST("api/v1/orders/applyDiscountCode")
     suspend fun applyDiscountCode(
-        @Body data : ApplyDiscountModel
+        @Body data : ApplyDiscountModel,
+        @Header("Authorization") authToken: String,
     ): Response<ApplyDiscountCodeResponse>
 
     @Headers("Content-Type: application/json")
@@ -124,4 +133,35 @@ interface ApiServices {
     suspend fun getMyWallet(
         @Header("Authorization") authToken: String,
     ): Response<GetMyWalletModel>
+
+    @Headers("Content-Type: application/json")
+    @POST("api/v1/orders/{orderId}/cancel")
+    suspend fun cancelOrderOrCancelOrderItem(
+        @Header("Authorization") authToken: String,
+        @Path("orderId") orderId : String,
+        @Body itemId : CancelOrderItem
+    ): Response<MyOrdersResultData>
+    @Headers("Content-Type: application/json")
+    @POST("api/v1/orders/{orderId}/cancel")
+    suspend fun cancelOrderOrCancelOrderItem(
+        @Header("Authorization") authToken: String,
+        @Path("orderId") orderId : String,
+    ): Response<MyOrdersResultData>
+
+    @GET("api/v1/public/config")
+    suspend fun getConfigs(
+    ): Response<GetConfigsModel>
+
+    @POST("api/v1/users/setPassword")
+    suspend fun setPassword(
+        @Header("Authorization") authToken: String,
+        @Body data : SetPasswordRequestBody,
+    ): Response<SetPasswordResponse>
+    @GET("api/v1/public/advertisements")
+    suspend fun advertisements():Response<AdvertismentResponse>
+
+    @POST("api/v1/auth/authenticate")
+    suspend fun login(
+        @Body encryptedData: SendOtpRequestBody,
+    ): Response<LoginModel>
 }

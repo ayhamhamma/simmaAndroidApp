@@ -13,4 +13,5 @@
     <string name="pendingPayment">Pending Payment</string>
     <string name="onHold">On Hold</string>
     <string name="title_activity_basic_two_language_text_field">BasicTwoLanguageTextField</string>
+    <string name="title_activity_splash">SplashActivity</string>
 </resources>

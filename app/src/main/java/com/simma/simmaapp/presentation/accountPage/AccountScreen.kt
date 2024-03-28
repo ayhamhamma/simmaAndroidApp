@@ -1,6 +1,11 @@
 package com.simma.simmaapp.presentation.accountPage
 
+import android.app.Activity
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.provider.Settings
+import android.widget.Toast
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -42,8 +47,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
 import com.simma.simmaapp.R
+import com.simma.simmaapp.presentation.helpCenterScreen.openFacebookLink
+import com.simma.simmaapp.presentation.helpCenterScreen.openInstagramLink
+import com.simma.simmaapp.presentation.helpCenterScreen.openLinkInBrowser
 import com.simma.simmaapp.presentation.homePage.HomeActivity
 import com.simma.simmaapp.presentation.homePage.ui.theme.BackgroundLightGrey
 import com.simma.simmaapp.presentation.homePage.ui.theme.Yellow
@@ -84,9 +93,11 @@ fun AccountScreen(navController: NavController? = null) {
                 title = "My Orders"
             ) {
                 // on click
-                navController?.navigate(HomeScreens.MyOrdersScreen.withArgs(
-                    "true"
-                ))
+                navController?.navigate(
+                    HomeScreens.MyOrdersScreen.withArgs(
+                        "true"
+                    )
+                )
             }
             Spacer(modifier = Modifier.size(22.dp))
             SettingsItem(
@@ -103,6 +114,21 @@ fun AccountScreen(navController: NavController? = null) {
             ) {
                 showDialog = true
             }
+
+            if ((ContextCompat.checkSelfPermission(
+                    context,
+                    android.Manifest.permission.POST_NOTIFICATIONS
+                ) != PackageManager.PERMISSION_GRANTED)
+            ) {
+                Spacer(modifier = Modifier.size(22.dp))
+                SettingsItem(
+                    icon = R.drawable.enable_notifications_icon,
+                    title = "Enable Notifications"
+                ) {
+                    requestNotificationPermission((context as HomeActivity))
+                }
+            }
+
             Spacer(modifier = Modifier.size(30.dp))
             Text(
                 text = "You need any help?",
@@ -125,7 +151,11 @@ fun AccountScreen(navController: NavController? = null) {
                 icon = R.drawable.contect_us_icon,
                 title = "Contact Us "
             ) {
-                navController?.navigate(HomeScreens.ContactUsScreen.route)
+                val phoneNumber = "+9647840385186"
+                val intent = Intent(Intent.ACTION_DIAL).apply {
+                    data = Uri.parse("tel:$phoneNumber")
+                }
+                context.startActivity(intent)
             }
             Spacer(modifier = Modifier.size(22.dp))
             SettingsItem(
@@ -155,11 +185,11 @@ fun AccountScreen(navController: NavController? = null) {
                 )
 
                 Row(Modifier.clickable {
-                    if (isLoggedIn(context)){
+                    if (isLoggedIn(context)) {
                         clearUserData(context = context)
                         context.startActivity(Intent(context, LoginActivity::class.java))
                         (context as HomeActivity).finish()
-                    }else{
+                    } else {
                         clearUserData(context = context)
                         context.startActivity(Intent(context, LoginActivity::class.java))
                         (context as HomeActivity).finish()
@@ -197,7 +227,9 @@ fun AccountScreen(navController: NavController? = null) {
                         contentDescription = "Facebook",
                         Modifier
                             .width(20.3823.dp)
-                            .height(22.99294.dp)
+                            .height(22.99294.dp).clickable {
+                                openFacebookLink(context,"https://www.facebook.com/Simma.io/")
+                            }
                     )
                     Spacer(modifier = Modifier.size(10.dp))
                     Image(
@@ -206,6 +238,9 @@ fun AccountScreen(navController: NavController? = null) {
                         Modifier
                             .width(20.3823.dp)
                             .height(22.99294.dp)
+                            .clickable {
+                            openInstagramLink(context,"https://www.instagram.com/simma.io/?hl=en")
+                        }
                     )
                     Spacer(modifier = Modifier.size(10.dp))
                     Image(
@@ -214,6 +249,9 @@ fun AccountScreen(navController: NavController? = null) {
                         Modifier
                             .width(20.3823.dp)
                             .height(22.99294.dp)
+                            .clickable {
+                                openLinkInBrowser(context,"https://www.simma.io/")
+                            }
                     )
                 }
             }
@@ -373,6 +411,7 @@ fun DoneDialog(onDismiss: (() -> Unit)? = null) {
     }
 }
 
+
 @Composable
 fun SaveButton(modifier: Modifier = Modifier, text: String = "Save", onClick: () -> Unit) {
     Box(
@@ -396,4 +435,11 @@ fun SaveButton(modifier: Modifier = Modifier, text: String = "Save", onClick: ()
         )
     }
 
+}
+fun requestNotificationPermission(activity: Activity) {
+    val intent = Intent()
+    intent.action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
+    intent.data = Uri.fromParts("package", activity.packageName, null)
+    activity.startActivity(intent)
+    Toast.makeText(activity, "Please enable notifications for this app", Toast.LENGTH_LONG).show()
 }

@@ -1,6 +1,11 @@
 package com.simma.simmaapp.presentation.profilePage
 
 import androidx.annotation.DrawableRes
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -18,6 +23,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -48,6 +54,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.airbnb.lottie.compose.LottieAnimation
+import com.airbnb.lottie.compose.LottieCompositionSpec
+import com.airbnb.lottie.compose.LottieConstants
+import com.airbnb.lottie.compose.rememberLottieComposition
 import com.simma.simmaapp.R
 import com.simma.simmaapp.model.citiesModel.CitiesModelItem
 import com.simma.simmaapp.presentation.deleveryAndPayment.MenuItem
@@ -56,9 +66,11 @@ import com.simma.simmaapp.presentation.theme.ActiveResendCodeColor
 import com.simma.simmaapp.presentation.theme.Dimen.PADDING
 import com.simma.simmaapp.presentation.theme.ErrorColor
 import com.simma.simmaapp.presentation.theme.LightGrey
+import com.simma.simmaapp.presentation.theme.MedDarkGrey
 
+@Preview(showBackground = true)
 @Composable
-fun ProfileScreen(navController: NavController) {
+fun ProfileScreen(navController: NavController? = null) {
     val viewModel: ProfileScreenViewModel = hiltViewModel()
     Box {
         Column(
@@ -77,7 +89,7 @@ fun ProfileScreen(navController: NavController) {
                     fontSize = 20.sp,
                     fontFamily = FontFamily(Font(R.font.font_med)),
                     fontWeight = FontWeight(700),
-                    color = ActiveResendCodeColor,
+                    color = MedDarkGrey,
                 )
             )
             Spacer(modifier = Modifier.size(21.dp))
@@ -85,9 +97,10 @@ fun ProfileScreen(navController: NavController) {
                 Box(
                     modifier = Modifier
                         .weight(1f)
-
+                        .height(40.dp)
                 ) {
                     OutlinedTextField(
+                        modifier = Modifier.fillMaxSize(),
                         isError = viewModel.isFirstNameError,
                         text = viewModel.nameText,
                         onTextChange = {
@@ -104,17 +117,36 @@ fun ProfileScreen(navController: NavController) {
                     OutlinedTextField(
                         modifier = Modifier.fillMaxSize(),
                         // Other TextField attributes...
-                        icon = R.drawable.phone_field_icon,
-                        hint = "Phone",
-                        text = viewModel.phoneText,
+                        hint = "Last Name",
+                        isError = viewModel.isLastNameError,
+                        text =
+                        viewModel.lastName,
                         onTextChange = {
-//                            viewModel.phoneText = it
+                            viewModel.lastName = it
                         }
                     )
                 }
             }
             Spacer(modifier = Modifier.size(14.dp))
-            Row(Modifier.fillMaxWidth()) {
+            Box(
+                modifier = Modifier
+                    .height(40.dp)
+            ) {
+                OutlinedTextField(
+                    modifier = Modifier.fillMaxSize(),
+                    // Other TextField attributes...
+                    icon = R.drawable.phone_field_icon,
+                    hint = "Phone",
+                    text = viewModel.phoneText,
+                    onTextChange = {
+//                            viewModel.phoneText = it
+                    }
+                )
+            }
+
+            if(false){
+                Spacer(modifier = Modifier.size(14.dp))
+                Row(Modifier.fillMaxWidth()) {
                 Box(
                     modifier = Modifier
                         .weight(1f)
@@ -124,9 +156,10 @@ fun ProfileScreen(navController: NavController) {
                         modifier = Modifier.fillMaxSize(),
                         icon = R.drawable.gender_icon,
                         hint = "Gender",
-                        text = viewModel.genderText,
+                        text = "",
+//                        viewModel.genderText,
                         onTextChange = {
-                            viewModel.genderText = it
+//                            viewModel.genderText = it
                         }
                     )
                 }
@@ -141,12 +174,14 @@ fun ProfileScreen(navController: NavController) {
                         // Other TextField attributes...
                         icon = R.drawable.date_of_birth,
                         hint = "Date of Birth",
-                        text = viewModel.dateOfBirthText,
+                        text = "",
+//                        viewModel.dateOfBirthText,
                         onTextChange = {
-                            viewModel.dateOfBirthText = it
+//                            viewModel.dateOfBirthText = it
                         }
                     )
                 }
+            }
             }
             Spacer(modifier = Modifier.size(14.dp))
             OutlinedTextField(
@@ -179,15 +214,17 @@ fun ProfileScreen(navController: NavController) {
                 icon = R.drawable.detaild_address_icon,
                 hint = "Address Details",
                 isLong = true,
-                isError = viewModel.isAddressError,
-                text = viewModel.addressText,
+                isError =
+                viewModel.isAddressError,
+                text =
+                    viewModel.addressText,
                 onTextChange = {
                     viewModel.addressText = it
                 }
             )
             Spacer(modifier = Modifier.size(28.dp))
-            SaveButton {
-                viewModel.onSaveClick()
+            SaveButton(isLoading = viewModel.isButtonLoading) {
+                viewModel.onSaveClick(navController!!)
             }
 
         }
@@ -206,6 +243,20 @@ fun ProfileScreen(navController: NavController) {
                 .align(Alignment.BottomEnd)
                 .padding(end = 16.dp, bottom = 33.dp)
         )
+        if(viewModel.isLoading)
+        Box(
+            Modifier
+                .fillMaxSize()
+                .background(Color.White), contentAlignment = Alignment.Center) {
+            val composition by rememberLottieComposition(spec = LottieCompositionSpec.RawRes(R.raw.loading_animation))
+            LottieAnimation(
+                composition = composition,
+                iterations = LottieConstants.IterateForever,
+                modifier = Modifier
+                    .height(60.dp)
+                    .width(100.dp)
+            )
+        }
     }
 
 
@@ -443,25 +494,41 @@ fun CustomDropDownMenu(
 }
 
 @Composable
-fun SaveButton(modifier: Modifier = Modifier, text: String = "Save", onClick: () -> Unit) {
-    Box(
-        modifier
-            .clip(RoundedCornerShape(12.dp))
-            .background(Yellow)
-            .fillMaxWidth()
-            .height(39.dp)
-            .clickable {
-                onClick()
-            }, contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = text,
-            style = TextStyle(
-                fontSize = 16.sp,
-                fontWeight = FontWeight(1000),
-                color = Color(0xFF2D2D2D),
-            )
-        )
+fun SaveButton(modifier: Modifier = Modifier,isLoading : Boolean, text: String = "Save", onClick: () -> Unit, ) {
+    Box(modifier.fillMaxWidth(),contentAlignment = Alignment.Center){
+        Box(
+            Modifier
+                .clip(RoundedCornerShape(12.dp))
+                .background(Yellow)
+                .height(39.dp)
+                .clickable {
+                    onClick.invoke()
+                }, contentAlignment = Alignment.Center
+        ) {
+            AnimatedVisibility(visible = !isLoading, exit = shrinkHorizontally(), enter = expandHorizontally()) {
+                Text(
+                    text = text,
+                    style = TextStyle(
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight(1000),
+                        color = Color(0xFF2D2D2D),
+                        textAlign = TextAlign.Center
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+            AnimatedVisibility(visible = isLoading, enter = fadeIn(), exit = fadeOut()) {
+                val composition by rememberLottieComposition(spec = LottieCompositionSpec.RawRes(R.raw.loading_animation))
+                LottieAnimation(
+                    composition = composition,
+                    iterations = LottieConstants.IterateForever,
+                    modifier = Modifier
+                        .height(30.dp)
+                        .width(100.dp)
+                )
+            }
+        }
     }
+
 
 }

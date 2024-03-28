@@ -3,7 +3,7 @@ package com.simma.simmaapp.model.updateProfile
 data class UpdateProfileResponse(
     val __v: Int,
     val _id: String,
-    val address: AddressX,
+    val address: AddressX? = null,
     val balance: Int,
     val createdAt: String,
     val email: String,

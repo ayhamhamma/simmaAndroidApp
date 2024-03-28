@@ -2,11 +2,12 @@ package com.simma.simmaapp.presentation.confirmOrderPage
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -85,6 +86,10 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.airbnb.lottie.compose.LottieAnimation
+import com.airbnb.lottie.compose.LottieCompositionSpec
+import com.airbnb.lottie.compose.LottieConstants
+import com.airbnb.lottie.compose.rememberLottieComposition
 import com.simma.simmaapp.R
 import com.simma.simmaapp.presentation.homePage.HomeActivity
 import com.simma.simmaapp.presentation.homePage.ui.theme.Yellow
@@ -108,7 +113,7 @@ import com.simma.simmaapp.utils.Constants.CART_TOTAL
 import com.simma.simmaapp.utils.Constants.DELIVERY_CITY_NAME
 import com.simma.simmaapp.utils.Constants.DELIVERY_DETAILED_ADDRESS
 import com.simma.simmaapp.utils.Constants.DELIVERY_FEES
-import com.simma.simmaapp.utils.Constants.DISCOUNTS_LIST
+import com.simma.simmaapp.utils.Helpers.formatNumber
 import com.simma.simmaapp.utils.ModifierUtil.dropShadow
 import kotlinx.coroutines.launch
 
@@ -245,10 +250,11 @@ fun ConfirmOrderScreen(navController: NavController? = null) {
                             )
                         }
                         Spacer(modifier = Modifier.size(16.dp))
-                        AnimatedVisibility (viewModel.showWalletFreeShipping,
+                        AnimatedVisibility(
+                            viewModel.showWalletFreeShipping,
 //                            enter = fadeIn(),
 //                            exit = fadeOut()
-                            ){
+                        ) {
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -300,16 +306,17 @@ fun ConfirmOrderScreen(navController: NavController? = null) {
                                         viewModel.applyColor = Color(0xFF999999)
                                     }
                                 }, hint = "Do you have a discount",
-                                text = viewModel.discountText
+                                text = viewModel.discountText,
+                                isError =viewModel.discountError
                             )
                             Box(
                                 modifier = Modifier
                                     .weight(1f) // Takes 1 out of 4 parts
                                     .clip(RoundedCornerShape(8.dp))
                                     .clickable {
-                                        if(!APPLY_DISCOUNT.value){
+                                        if (!APPLY_DISCOUNT.value) {
                                             viewModel.applyDiscount()
-                                        }else{
+                                        } else {
                                             APPLY_DISCOUNT.value = false
                                         }
                                     }
@@ -334,7 +341,7 @@ fun ConfirmOrderScreen(navController: NavController? = null) {
                         if (
                             viewModel.discountError
                         ) {
-                            Spacer(modifier = Modifier.size(10.dp))
+//                            Spacer(modifier = Modifier.size(10.dp))
                             Row(
                                 horizontalArrangement = Arrangement.Start,
                                 verticalAlignment = Alignment.CenterVertically
@@ -388,7 +395,7 @@ fun ConfirmOrderScreen(navController: NavController? = null) {
                                         color = Color(0xff2D2D2D),
                                     )
                                     Text(
-                                        text = (viewModel.grandTotal.toDouble() + Constants.DELIVERY_FEES.toDouble()).toString(),
+                                        text = formatNumber((viewModel.grandTotal.toDouble() + Constants.DELIVERY_FEES.toDouble()).toString()),
                                         fontSize = 20.sp,
                                         fontFamily = FontFamily(Font(R.font.font_med)),
                                         fontWeight = FontWeight(700),
@@ -462,7 +469,7 @@ fun ConfirmOrderScreen(navController: NavController? = null) {
                                             )
                                         )
                                         Text(
-                                            text = DELIVERY_FEES,
+                                            text = formatNumber(DELIVERY_FEES),
                                             style = TextStyle(
                                                 fontSize = 12.sp,
                                                 fontWeight = FontWeight(700),
@@ -480,19 +487,28 @@ fun ConfirmOrderScreen(navController: NavController? = null) {
                 }
             }
         }
-        BottomAppBar(Modifier.align(Alignment.BottomCenter)) {
-            if (Constants.WALLET_SELECTED) {
-                isPobUpVisible = true
-            } else {
-                viewModel.placeOrder {
-                    navController?.navigate(HomeScreens.MyOrdersScreen.withArgs(
-                        "false"
-                    ))
+        BottomAppBar(
+            Modifier.align(Alignment.BottomCenter),
+            isLoading = viewModel.isBottomButtonLoading,
+            onClick = {
+                if (Constants.WALLET_SELECTED) {
+                    isPobUpVisible = true
+                } else {
+                    viewModel.placeOrder {
+                        navController?.popBackStack()
+                        navController?.popBackStack()
+                        navController?.popBackStack()
+                        navController?.popBackStack()
+                        navController?.navigate(
+                            HomeScreens.MyOrdersScreen.withArgs(
+                                "false"
+                            )
+                        )
+                    }
+
                 }
 
-            }
-
-        }
+            })
 
 //        AnimatedVisibility(
 //            visible = isPobUpVisible,
@@ -582,7 +598,7 @@ fun DetailsItem(
                 )
             }
             Text(
-                text = value,
+                text = formatNumber(value),
                 style = TextStyle(
                     fontSize = 16.sp,
                     fontWeight = FontWeight(400),
@@ -600,7 +616,8 @@ fun OutlinedTextField(
     modifier: Modifier,
     hint: String = "",
     onTextChange: (String) -> Unit,
-    text: String
+    text: String,
+    isError : Boolean
 ) {
     val interactionSource = remember { MutableInteractionSource() }
 
@@ -635,7 +652,7 @@ fun OutlinedTextField(
             container = {
                 OutlinedTextFieldDefaults.ContainerBox(
                     enabled = true,
-                    isError = false,
+                    isError = isError,
                     interactionSource = interactionSource,
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = Yellow, // You can adjust the color as needed
@@ -652,7 +669,11 @@ fun OutlinedTextField(
 
 @Preview(showBackground = true)
 @Composable
-fun BottomAppBar(modifier: Modifier = Modifier, onClick: (() -> Unit)? = null) {
+fun BottomAppBar(
+    modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null,
+    isLoading: Boolean = false
+) {
     val interactionSource = remember { MutableInteractionSource() }
     Box(
         modifier
@@ -671,10 +692,7 @@ fun BottomAppBar(modifier: Modifier = Modifier, onClick: (() -> Unit)? = null) {
 
 
     ) {
-        BottomButton(modifier = Modifier.clickable(
-            interactionSource = interactionSource,
-            indication = null
-        ) {
+        BottomButton(isLoading = isLoading, onClick = {
             onClick?.invoke()
         })
     }
@@ -682,39 +700,57 @@ fun BottomAppBar(modifier: Modifier = Modifier, onClick: (() -> Unit)? = null) {
 
 @Preview(showBackground = true)
 @Composable
-fun BottomButton(modifier: Modifier = Modifier, text: String = "View Cart") {
-    val painter = painterResource(id = R.drawable.simma_logo)
+fun BottomButton(
+    modifier: Modifier = Modifier,
+    text: String = "View Cart",
+    onClick: (() -> Unit)? = null,
+    isLoading: Boolean = false
+) {
+    val composition by rememberLottieComposition(spec = LottieCompositionSpec.RawRes(R.raw.loading_animation))
+    val painter = painterResource(id = R.drawable.place_order_icon)
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(15.dp))
+            .clickable {
+                onClick?.invoke()
+            }
             .background(Yellow)
             .padding(start = 25.dp, end = 25.dp, top = 5.dp, bottom = 5.dp),
         contentAlignment = Alignment.Center
     ) {
-        Row {
-            Image(
-                painter = painter,
-                contentDescription = text,
-                Modifier.align(Alignment.CenterVertically)
-            )
-            Spacer(modifier = Modifier.width(10.dp))
-            Box(
-                modifier = Modifier
-                    .background(Color.DarkGray)
-                    .height(30.dp)
-                    .width(1.dp)
-            )
-            Spacer(modifier = Modifier.width(10.dp))
-            Text(
-                text = "Place order",
-                fontSize = 16.sp,
-                fontFamily = FontFamily(Font(R.font.font_med)),
-                fontWeight = FontWeight(700),
-                color = Color(0xFF2D2D2D),
-                modifier = Modifier.align(Alignment.CenterVertically)
+        AnimatedVisibility(!isLoading, exit = shrinkHorizontally(), enter = expandHorizontally()) {
+            Row {
 
-            )
+                Image(
+                    painter = painter,
+                    contentDescription = text,
+                    Modifier.align(Alignment.CenterVertically)
+                )
+                Box(
+                    modifier = Modifier
 
+                        .height(30.dp)
+                        .width(1.dp)
+                )
+                Spacer(modifier = Modifier.width(10.dp))
+                Text(
+                    text = "Place order",
+                    fontSize = 16.sp,
+                    fontFamily = FontFamily(Font(R.font.font_med)),
+                    fontWeight = FontWeight(700),
+                    color = Color(0xFF2D2D2D),
+                    modifier = Modifier.align(Alignment.CenterVertically)
+
+                )
+
+            }
+        }
+        AnimatedVisibility(visible = isLoading, enter = fadeIn(), exit = fadeOut()) {
+            LottieAnimation(
+                composition = composition,
+                iterations = LottieConstants.IterateForever,
+                modifier = Modifier.size(30.dp)
+            )
         }
     }
 }
@@ -880,9 +916,11 @@ fun SecondScreen(
                     ) {
                         onClick?.invoke()
                         viewModel?.verifyOtp(context) {
-                            navController?.navigate(HomeScreens.MyOrdersScreen.withArgs(
-                                "false"
-                            ))
+                            navController?.navigate(
+                                HomeScreens.MyOrdersScreen.withArgs(
+                                    "false"
+                                )
+                            )
                         }
                     }, selected = true,
                 iconShow = false,

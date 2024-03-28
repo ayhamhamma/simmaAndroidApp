@@ -51,6 +51,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
 import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.rememberLottieComposition
@@ -59,6 +60,8 @@ import com.bumptech.glide.integration.compose.GlideImage
 import com.simma.simmaapp.R
 import com.simma.simmaapp.model.myOrdersModel.MyOrdersResultData
 import com.simma.simmaapp.presentation.homePage.HomeActivity
+import com.simma.simmaapp.presentation.homeScreen.HomeScreens
+import com.simma.simmaapp.presentation.registrationView.SmsOrWhatsApp
 import com.simma.simmaapp.presentation.theme.CanceledColor
 import com.simma.simmaapp.presentation.theme.CheckoutAppBarColor
 import com.simma.simmaapp.presentation.theme.ConfirmedColor
@@ -70,14 +73,20 @@ import com.simma.simmaapp.presentation.theme.OutForDeliveryColor
 import com.simma.simmaapp.presentation.theme.PendingPaymentColor
 import com.simma.simmaapp.presentation.theme.ProcessingColor
 import com.simma.simmaapp.presentation.theme.checkoutLightText
+import com.simma.simmaapp.utils.Constants
+import com.simma.simmaapp.utils.Constants.SELECTED_ORDER
+import com.simma.simmaapp.utils.Constants.SELECTED_ORDERS_CHANGE
+import com.simma.simmaapp.utils.Helpers.formatDate
+import com.simma.simmaapp.utils.Helpers.formatNumber
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 
 @OptIn(ExperimentalMaterialApi::class)
 @Preview(showBackground = true)
 @Composable
-fun MyOrdersScreen(fromHome : Boolean = false) {
+fun MyOrdersScreen(fromHome : Boolean = false, navController : NavController? = null) {
     val viewModel: MyOrdersViewModel = hiltViewModel()
     val refreshScope = rememberCoroutineScope()
     var refreshing by remember { mutableStateOf(false) }
@@ -86,15 +95,13 @@ fun MyOrdersScreen(fromHome : Boolean = false) {
     fun refresh() = refreshScope.launch {
         refreshing = true
         delay(1500)
-        viewModel.getLastOrders()
+        viewModel.refresh()
         itemCount += 5
         refreshing = false
     }
     val state = rememberPullRefreshState(refreshing, ::refresh)
 
-    var showDialog by remember {
-        mutableStateOf(true)
-    }
+
     Box(Modifier.pullRefresh(state)) {
         Column(
             Modifier
@@ -105,13 +112,23 @@ fun MyOrdersScreen(fromHome : Boolean = false) {
             AppBar()
             LazyColumn {
                 items(viewModel.state.items.size) {
-                    MyOrderItem(order = viewModel.state.items[it])
+                    if(it >= viewModel.state.items.size - 4){
+                        viewModel.getLastOrders()
+                    }
+                    MyOrderItem(order = viewModel.state.items[it]){
+
+                        SELECTED_ORDER = viewModel.state.items[it]
+                        SELECTED_ORDERS_CHANGE.update {
+                            !it
+                        }
+                        navController?.navigate(HomeScreens.OrderDetailsScreen.route)
+                    }
                 }
             }
         }
-        if (showDialog && !fromHome) {
+        if (viewModel.showDialog && !fromHome) {
             DoneDialog {
-                showDialog = false
+                viewModel.showDialog = false
             }
         }
         PullRefreshIndicator(refreshing, state, Modifier.align(Alignment.TopCenter))
@@ -139,7 +156,7 @@ fun AppBar() {
                 modifier = Modifier
                     .size(20.dp)
                     .clickable {
-                        (context as HomeActivity).onBackPressedDispatcher.onBackPressed()
+                        (context as HomeActivity).onBackPressed()
                     },
                 tint = MedDarkGrey
             )
@@ -156,7 +173,8 @@ fun MyOrderItem(
     paymentMethod: Int = 2,
     modifier: Modifier = Modifier,
     freeDelivery: Boolean = true,
-    order: MyOrdersResultData? = null
+    order: MyOrdersResultData? = null,
+    onItemClickListener : (() -> Unit)? = null
 ) {
     val context = LocalContext.current
     val color by remember {
@@ -246,13 +264,16 @@ fun MyOrderItem(
                 }
 
                 else -> {
-//                    ProcessingColor
                     context.getString(R.string.processing)
                 }
             }
         )
     }
-    Column {
+    Column(
+        Modifier.clickable {
+            onItemClickListener?.invoke()
+        }
+    ) {
         Spacer(modifier = Modifier.size(PADDING))
 
         Box(
@@ -263,7 +284,7 @@ fun MyOrderItem(
             ) {
 
             GlideImage(
-                model = order!!.merchant.image.originalUrl, contentDescription = "Order Merchant",
+                model = order?.merchant?.image?.originalUrl ?: "", contentDescription = "Order Merchant",
                 modifier = Modifier
                     .size(68.dp)
                     .clip(
@@ -303,7 +324,7 @@ fun MyOrderItem(
                         )
                     )
                     Text(
-                        text = order!!.paymentDetails.IQDGrandTotal.toString(),
+                        text = formatNumber(order!!.paymentDetails.IQDGrandTotal.toString()),
                         style = TextStyle(
                             fontSize = 16.sp,
                             fontFamily = FontFamily(Font(R.font.font_med)),
@@ -312,60 +333,59 @@ fun MyOrderItem(
                         )
                     )
                 }
-                Row(Modifier.padding(top = 30.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        modifier = Modifier
-                            .clip(CircleShape)
-                            .size(11.dp)
-                            .background(color)
+                Row(
+                    Modifier
+                        .padding(top = 30.dp), verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.calender),
+                        contentDescription = "date",
+                        modifier = Modifier.size(13.dp)
                     )
-                    Spacer(modifier = Modifier.size(5.dp))
+                    Spacer(modifier = Modifier.size(3.dp))
                     Text(
-                        text = status,
+                        text = formatDate(order?.delivery?.maximumDate?:""),
                         style = TextStyle(
-                            fontSize = 12.sp,
-                            fontFamily = FontFamily(Font(R.font.font)),
-                            fontWeight = FontWeight(700),
+                            fontSize = 10.sp,
+                            fontFamily = FontFamily(Font(R.font.font_med)),
+                            fontWeight = FontWeight(400),
                             color = checkoutLightText,
                         )
                     )
+
                 }
 
             }
             Image(
-                painter = painterResource(id = R.drawable.edit_icon), contentDescription = "edit",
+                painter = painterResource(id = R.drawable.show_details_icon), contentDescription = "edit",
                 Modifier
                     .clip(
                         RoundedCornerShape(8.dp)
                     )
                     .background(CheckoutAppBarColor)
+                    .size(24.dp)
                     .padding(5.dp)
-                    .size(20.dp)
                     .align(Alignment.TopEnd)
             )
-            Row(
-                Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(bottom = 8.dp), verticalAlignment = Alignment.CenterVertically
-            ) {
-                Image(
-                    painter = painterResource(id = R.drawable.calender),
-                    contentDescription = "date",
-                    modifier = Modifier.size(13.dp)
+
+            Row(Modifier.align(Alignment.BottomEnd).padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .size(11.dp)
+                        .background(color)
                 )
-                Spacer(modifier = Modifier.size(3.dp))
+                Spacer(modifier = Modifier.size(5.dp))
                 Text(
-                    text = order.delivery.maximumDate,
+                    text = status,
                     style = TextStyle(
-                        fontSize = 10.sp,
-                        fontFamily = FontFamily(Font(R.font.font_med)),
-                        fontWeight = FontWeight(400),
+                        fontSize = 12.sp,
+                        fontFamily = FontFamily(Font(R.font.font)),
+                        fontWeight = FontWeight(700),
                         color = checkoutLightText,
                     )
                 )
-
             }
-
 
         }
         Spacer(modifier = Modifier.size(PADDING))
@@ -376,7 +396,6 @@ fun MyOrderItem(
                 .height(1.dp)
                 .background(Color.LightGray)
         ) {
-
         }
     }
 }

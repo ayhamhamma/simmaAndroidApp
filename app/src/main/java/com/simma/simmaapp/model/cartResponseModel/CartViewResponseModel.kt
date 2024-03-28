@@ -14,9 +14,9 @@ data class CartViewResponseModel(
     val items: List<Item>,
     val merchantInfo: MerchantInfo,
     val paymentDetails: PaymentDetails,
-    val shippingCost: Int,
+    val shippingCost: Double,
     val status: String,
     val total: Double,
     val transactions: List<Any>,
-    val unitShipmentFee: Int
+    val unitShipmentFee: Double
 )

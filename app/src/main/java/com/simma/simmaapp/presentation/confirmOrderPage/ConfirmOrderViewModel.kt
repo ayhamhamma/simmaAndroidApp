@@ -13,7 +13,6 @@ import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
 import com.simma.simmaapp.model.applyDiscountCode.ApplyDiscountModel
 import com.simma.simmaapp.model.cartResponseModel.DiscountOption
-import com.simma.simmaapp.presentation.cartPage.DiscountStateModel
 import com.simma.simmaapp.presentation.theme.DarkBlue
 import com.simma.simmaapp.remote.Repository
 import com.simma.simmaapp.utils.Constants
@@ -32,6 +31,7 @@ import com.simma.simmaapp.utils.Constants.WALLET_FREE_SHIPPING
 import com.simma.simmaapp.utils.Constants.WALLET_SELECTED
 import com.simma.simmaapp.utils.Encryption
 import com.simma.simmaapp.utils.Helpers
+import com.simma.simmaapp.utils.Helpers.getSelectedCurrency
 import com.simma.simmaapp.utils.Helpers.getToken
 import com.simma.simmaapp.utils.Helpers.getUserId
 import com.simma.simmaapp.utils.Helpers.getUserPhoneNumber
@@ -47,10 +47,8 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -77,14 +75,15 @@ class ConfirmOrderViewModel @Inject constructor(
     var discountViewList by mutableStateOf(mutableListOf<DiscountOption>())
     var globalGrandTotal = ""
     var token1 = ""
+    var isBottomButtonLoading by mutableStateOf(false)
 
     init {
         globalGrandTotal = CART_GRAND_TOTAL
         // Logic for showing WFS at the first time
         showWalletFreeShipping = WALLET_FREE_SHIPPING > 0 && IS_FREE_SHIPPING_CHECKED.value
         IS_FREE_SHIPPING_CHECKED.combine(APPLY_DISCOUNT) { isFreeShippingChecked, applyDiscount ->
-            Log.e("ayhamCartViewModel", "this is a combine emission")
-            changeCheckWFS(isFreeShippingChecked,applyDiscount)
+            e("ayhamCartViewModel", "this is a combine emission")
+            changeCheckWFS(isFreeShippingChecked, applyDiscount)
         }.launchIn(viewModelScope)
     }
 
@@ -99,7 +98,7 @@ class ConfirmOrderViewModel @Inject constructor(
                     is Resource.Success -> {
                         Helpers.setPlaceOrderToken(appContext, result.data.token)
                         Constants.PHONE_NUMBER =
-                            "00962" + getUserPhoneNumber(appContext).substring(4)
+                            "00${getSelectedCurrency(appContext)}" + getUserPhoneNumber(appContext).substring(4)
                     }
 
                     is Resource.Loading -> {
@@ -155,7 +154,7 @@ class ConfirmOrderViewModel @Inject constructor(
                     is Resource.Success -> {
                         Helpers.setPlaceOrderToken(appContext, result.data.token)
                         Constants.PHONE_NUMBER =
-                            "00962" + getUserPhoneNumber(appContext).substring(4)
+                            "00${getSelectedCurrency(appContext)}" + getUserPhoneNumber(appContext).substring(4)
                     }
 
                     is Resource.Loading -> {
@@ -176,8 +175,9 @@ class ConfirmOrderViewModel @Inject constructor(
             Constants.CART_RESPONSE!!,
             discountText
         )
+        val token = getToken(appContext)
         viewModelScope.launch {
-            repository.applyDiscount(data).collect { result ->
+            repository.applyDiscount(data,token).collect { result ->
                 when (result) {
                     is Resource.Success -> {
                         if (result.data.isValid) {
@@ -249,91 +249,94 @@ class ConfirmOrderViewModel @Inject constructor(
     }
 
     fun placeOrder(navigate: () -> Unit) {
-        viewModelScope.launch {
-            val list = mutableListOf<PlaceOrderItem>()
-            CART_PRODUCT_LIST.forEach {
-                list.add(
-                    PlaceOrderItem(
-                        it.color,
-                        it.imageUrl,
-                        it.name,
-                        it.originalUnitPrice,
-                        it.quantity,
-                        it.size,
-                        it.sizeVariants,
-                        it.sku,
-                        it.url
+        if (!isBottomButtonLoading) {
+            viewModelScope.launch {
+                val list = mutableListOf<PlaceOrderItem>()
+                CART_PRODUCT_LIST.forEach {
+                    list.add(
+                        PlaceOrderItem(
+                            it.color,
+                            it.imageUrl,
+                            it.name,
+                            it.originalUnitPrice,
+                            it.quantity,
+                            it.size,
+                            it.sizeVariants,
+                            it.sku,
+                            it.url
+                        )
                     )
-                )
-            }
-            val gson = Gson()
-            var json_object = ""
-            if(APPLY_DISCOUNT.value){
-                var data = PlaceOrderRequestBody(
-                    IS_FREE_SHIPPING_CHECKED.value,
-                    CustomerAddress(DELIVERY_CITY, DELIVERY_DETAILED_ADDRESS),
-                    list.toList(),
-                    SHOP_ID,
-                    if(WALLET_SELECTED) "wallet" else "cashOnDelivery" ,
-                    DISCOUNT_CODE,
-                    if(WALLET_SELECTED) token1 else null
-                )
-                json_object = gson.toJson(data)
-            }else{
-                var data = PlaceOrderNoCouponRequestBody(
-                    IS_FREE_SHIPPING_CHECKED.value,
-                    CustomerAddress(DELIVERY_CITY, DELIVERY_DETAILED_ADDRESS),
-                    list.toList(),
-                    SHOP_ID,
-                    if(WALLET_SELECTED) "wallet" else "cashOnDelivery",
-                    if(WALLET_SELECTED) token1 else null
-                )
-                json_object = gson.toJson(data)
-            }
-            e("ayham",json_object)
-            repository.placeOrder(
-                Encryption.encryptData(json_object, getUserId(appContext)),
-                getToken(appContext)
-            ).collect { result ->
-                when (result) {
-                    is Resource.Success -> {
-                        showMessage("Order Added Successfully", appContext)
-                        navigate()
+                }
+                val gson = Gson()
+                var json_object = ""
+                if (APPLY_DISCOUNT.value) {
+                    var data = PlaceOrderRequestBody(
+                        WALLET_FREE_SHIPPING > 0 && IS_FREE_SHIPPING_CHECKED.value,
+                        CustomerAddress(DELIVERY_CITY, DELIVERY_DETAILED_ADDRESS),
+                        list.toList(),
+                        SHOP_ID,
+                        if (WALLET_SELECTED) "wallet" else "cashOnDelivery",
+                        DISCOUNT_CODE,
+                        if (WALLET_SELECTED) token1 else null
+                    )
+                    json_object = gson.toJson(data)
+                } else {
+                    var data = PlaceOrderNoCouponRequestBody(
+                        WALLET_FREE_SHIPPING > 0 &&IS_FREE_SHIPPING_CHECKED.value,
+                        CustomerAddress(DELIVERY_CITY, DELIVERY_DETAILED_ADDRESS),
+                        list.toList(),
+                        SHOP_ID,
+                        if (WALLET_SELECTED) "wallet" else "cashOnDelivery",
+                        if (WALLET_SELECTED) token1 else null
+                    )
+                    json_object = gson.toJson(data)
+                }
+                e("ayham", json_object)
+                repository.placeOrder(
+                    Encryption.encryptData(json_object, getUserId(appContext)),
+                    getToken(appContext)
+                ).collect { result ->
+                    when (result) {
+                        is Resource.Success -> {
+                            showMessage("Order Added Successfully", appContext)
+                            navigate()
+                        }
+
+                        is Resource.Error -> {
+                            showMessage("Error", appContext)
+                        }
+
+                        is Resource.Loading -> {
+                            isBottomButtonLoading = result.isLoading
+                        }
+
                     }
-
-                    is Resource.Error -> {
-                        showMessage("Error", appContext)
-                    }
-
-                    is Resource.Loading ->
-                        Unit
-
                 }
             }
         }
     }
 
     @SuppressLint("SuspiciousIndentation")
-    fun changeCheckWFS(isChecked: Boolean,applyDiscountCode: Boolean) {
+    fun changeCheckWFS(isChecked: Boolean, applyDiscountCode: Boolean) {
         check = isChecked
-        IS_FREE_SHIPPING_CHECKED.value= isChecked
+        IS_FREE_SHIPPING_CHECKED.value = isChecked
 
         viewModelScope.launch {
             delay(1000)
-            showWalletFreeShipping = isChecked
+            showWalletFreeShipping = WALLET_FREE_SHIPPING > 0 && isChecked
         }
         viewModelScope.launch {
             if (isChecked) {
                 // add wallet free shipping
                 // remove payment methods discount
                 val newDiscounts = mutableListOf<DiscountOption>()
-                e("ayham", DISCOUNTS_LIST.toList().toString() )
+                e("ayham", DISCOUNTS_LIST.toList().toString())
                 DISCOUNTS_LIST.forEach {
-                    if(WALLET_SELECTED && it.code == "cashOnDelivery"){
+                    if (WALLET_SELECTED && it.code == "cashOnDelivery") {
                         return@forEach
                     }
                     // category can be wrong
-                    if(!WALLET_SELECTED && it.code == "wallet"){
+                    if (!WALLET_SELECTED && it.code == "wallet") {
                         return@forEach
                     }
                     newDiscounts.add(it)
@@ -353,16 +356,16 @@ class ConfirmOrderViewModel @Inject constructor(
                 // remove wallet free shipping
                 // remove payment method free shipping
                 val newDiscounts = mutableListOf<DiscountOption>()
-                e("ayham", DISCOUNTS_LIST.toString() )
+                e("ayham", DISCOUNTS_LIST.toString())
                 DISCOUNTS_LIST.forEach {
-                    if (it.code == "walletFreeShipping"){
+                    if (it.code == "walletFreeShipping") {
                         return@forEach
                     }
-                    if(WALLET_SELECTED && it.code == "cashOnDelivery"){
+                    if (WALLET_SELECTED && it.code == "cashOnDelivery") {
                         return@forEach
                     }
                     // category can be wrong
-                    if(!WALLET_SELECTED && it.code == "wallet"){
+                    if (!WALLET_SELECTED && it.code == "wallet") {
                         return@forEach
                     }
                     newDiscounts.add(it)

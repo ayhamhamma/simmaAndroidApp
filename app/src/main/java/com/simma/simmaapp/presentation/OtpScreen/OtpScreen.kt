@@ -44,6 +44,7 @@ import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -58,34 +59,37 @@ import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.simma.simmaapp.R
-import com.simma.simmaapp.presentation.homePage.HomeActivity
+import com.simma.simmaapp.presentation.homePage.ui.theme.Yellow
 import com.simma.simmaapp.presentation.loginScreen.LoginActivity
 import com.simma.simmaapp.presentation.loginScreen.Screen
 import com.simma.simmaapp.presentation.theme.CheckoutAppBarColor
-import com.simma.simmaapp.presentation.theme.InActiveResendCodeColor
+import com.simma.simmaapp.presentation.theme.Dimen.PADDING
 import com.simma.simmaapp.presentation.theme.MedDarkGrey
+import com.simma.simmaapp.utils.Constants
 
 @Preview(showBackground = true)
 @Composable
-fun OtpScreen(navController: NavController? = null) {
+fun OtpScreen(navController: NavController? = null,isForgotPass:Boolean = false) {
     val interactionSource = remember { MutableInteractionSource() }
     ((LocalContext.current) as LoginActivity).window.apply {
         navigationBarColor = ContextCompat.getColor(context, R.color.statusAndNavigation)
         statusBarColor = ContextCompat.getColor(context, R.color.statusAndNavigation)
     }
-    val viewModel : OtpViewModel = hiltViewModel()
+    val viewModel: OtpViewModel = hiltViewModel()
     val context = LocalContext.current
     val clockPainter = painterResource(id = R.drawable.clock_image)
-    Column(modifier = Modifier
-        .fillMaxSize()
-        .fillMaxSize()
-        .background(Color.White)
-        .padding(bottom = 30.dp), verticalArrangement = Arrangement.SpaceBetween) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .fillMaxSize()
+            .background(Color.White)
+            .padding(bottom = 30.dp), verticalArrangement = Arrangement.SpaceBetween
+    ) {
         Column(
             Modifier
-                .padding(start = 30.dp, end = 30.dp)
+                .padding(start = PADDING, end = PADDING)
         ) {
-            AppBar()
+            AppBar(navController)
             Spacer(modifier = Modifier.size(30.dp))
             Text(
                 text = "Enter Your verification code",
@@ -96,66 +100,89 @@ fun OtpScreen(navController: NavController? = null) {
             )
             Spacer(modifier = Modifier.size(10.dp))
             Text(
-                text = "we’ve sent you a 6-digit code to +7899930202",
+                text = "we’ve sent you a 6-digit code to ${Constants.PHONE_NUMBER}",
                 fontSize = 16.sp,
                 fontFamily = FontFamily(Font(R.font.font)),
                 fontWeight = FontWeight(400),
                 color = MedDarkGrey,
-                )
+            )
             Spacer(modifier = Modifier.size(34.dp))
-            OTPView(navController = navController, viewModel = viewModel )
-        }
-        Column(
-            Modifier
-                .fillMaxWidth()
-                .padding(start = 30.dp, end = 30.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = "Resend code in",
-                    fontSize = 16.sp,
-                    fontFamily = FontFamily(Font(R.font.font)),
-                    fontWeight = FontWeight(400),
-                    color = MedDarkGrey,
-
-                    )
-                Spacer(modifier = Modifier.size(6.dp))
-                Row(
-                    Modifier
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(CheckoutAppBarColor)
-                        .padding(4.dp), verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Image(
-                        painter = clockPainter,
-                        contentDescription = "time",
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.size(9.dp))
+            OTPView(navController = navController, viewModel = viewModel)
+            Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        text = "00:${viewModel.timerState.collectAsState().value}",
+                        text = "Resend code in",
                         fontSize = 16.sp,
                         fontFamily = FontFamily(Font(R.font.font)),
                         fontWeight = FontWeight(400),
                         color = MedDarkGrey,
-                    )
+
+                        )
+                    Spacer(modifier = Modifier.size(6.dp))
+                    Row(
+                        Modifier
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(CheckoutAppBarColor)
+                            .padding(4.dp), verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Image(
+                            painter = clockPainter,
+                            contentDescription = "time",
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.size(9.dp))
+                        Text(
+                            text = "00:${viewModel.timerState.collectAsState().value}",
+                            fontSize = 16.sp,
+                            fontFamily = FontFamily(Font(R.font.font)),
+                            fontWeight = FontWeight(400),
+                            color = MedDarkGrey,
+                        )
+                    }
                 }
+                Text(
+                    text = "RESEND CODE ",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight(860),
+                    color = viewModel.resendColor,
+                    textAlign = TextAlign.Center,
+                    fontFamily = FontFamily(Font(R.font.font)),
+                    textDecoration = TextDecoration.Underline,
+                    modifier = Modifier.clickable(
+                        interactionSource = interactionSource,
+                        indication = null
+                    ) {
+                        if (viewModel.resendIsActive) {
+                            viewModel.resendOTP(context)
+                        }
+                    })
+
             }
+
+
+        }
+
+        Box(
+            Modifier
+                .padding(start = PADDING, end = PADDING)
+                .clip(RoundedCornerShape(12.dp))
+                .background(Yellow)
+                .fillMaxWidth()
+                .height(56.dp)
+                .clickable {
+                    viewModel.verifyOtp(context) {
+                        navController?.navigate(Screen.SetPasswordScreen.route)
+                    }
+                }, contentAlignment = Alignment.Center
+        ) {
             Text(
-                text = "RESEND CODE ",
-                fontSize = 18.sp,
-                fontWeight = FontWeight(860),
-                color = InActiveResendCodeColor,
-                textAlign = TextAlign.Center,
-                fontFamily = FontFamily(Font(R.font.font)),
-                textDecoration = TextDecoration.Underline,
-                modifier = Modifier.clickable(
-                    interactionSource = interactionSource,
-                    indication = null
-                ) {
-                    viewModel.resendOTP(context)
-                }
+                text = "Submit",
+                style = TextStyle(
+                    fontSize = 16.sp,
+                    lineHeight = 24.sp,
+                    fontWeight = FontWeight(700),
+                    color = Color(0xFF2D2D2D),
+                )
             )
         }
     }
@@ -165,8 +192,8 @@ fun OtpScreen(navController: NavController? = null) {
 @Composable
 fun OtpChar(
     modifier: Modifier = Modifier,
-    onTextChange : (data:String) -> Unit ={},
-    keyboardAction : KeyboardActions? = null,
+    onTextChange: (data: String) -> Unit = {},
+    keyboardAction: KeyboardActions? = null,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val painter = painterResource(id = R.drawable.dot)
@@ -202,8 +229,7 @@ fun OtpChar(
                     isFull = it.isNotEmpty()
                 }
             },
-            keyboardActions= keyboardAction ?:KeyboardActions.Default
-            ,
+            keyboardActions = keyboardAction ?: KeyboardActions.Default,
             modifier = modifier
                 .width(50.dp)
                 .onKeyEvent {
@@ -241,7 +267,11 @@ fun OtpChar(
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun OTPView(modifier: Modifier = Modifier, navController: NavController? = null,viewModel: OtpViewModel) {
+fun OTPView(
+    modifier: Modifier = Modifier,
+    navController: NavController? = null,
+    viewModel: OtpViewModel
+) {
     val interactionSource = remember { MutableInteractionSource() }
     val context = LocalContext.current
     val (item1, item2, item3, item4, item5, item6) = FocusRequester.createRefs()
@@ -257,7 +287,7 @@ fun OTPView(modifier: Modifier = Modifier, navController: NavController? = null,
                         previous = item1
                     },
                 onTextChange = {
-                    viewModel.updateOtpAtIndex(0,it)
+                    viewModel.updateOtpAtIndex(0, it)
                 }
             )
             OtpChar(
@@ -268,7 +298,7 @@ fun OTPView(modifier: Modifier = Modifier, navController: NavController? = null,
                         previous = item1
                     },
                 onTextChange = {
-                    viewModel.updateOtpAtIndex(1,it)
+                    viewModel.updateOtpAtIndex(1, it)
                 }
             )
             OtpChar(
@@ -279,7 +309,7 @@ fun OTPView(modifier: Modifier = Modifier, navController: NavController? = null,
                         previous = item2
                     },
                 onTextChange = {
-                    viewModel.updateOtpAtIndex(2,it)
+                    viewModel.updateOtpAtIndex(2, it)
                 }
             )
             OtpChar(
@@ -290,7 +320,7 @@ fun OTPView(modifier: Modifier = Modifier, navController: NavController? = null,
                         next = item5
                     },
                 onTextChange = {
-                    viewModel.updateOtpAtIndex(3,it)
+                    viewModel.updateOtpAtIndex(3, it)
                 }
             )
             OtpChar(
@@ -301,7 +331,7 @@ fun OTPView(modifier: Modifier = Modifier, navController: NavController? = null,
                         next = item6
                     },
                 onTextChange = {
-                    viewModel.updateOtpAtIndex(4,it)
+                    viewModel.updateOtpAtIndex(4, it)
                 }
             )
             OtpChar(
@@ -312,11 +342,11 @@ fun OTPView(modifier: Modifier = Modifier, navController: NavController? = null,
                         next = item6
                     },
                 onTextChange = {
-                    viewModel.updateOtpAtIndex(5,it)
+                    viewModel.updateOtpAtIndex(5, it)
                 },
                 keyboardAction = KeyboardActions(
                     onDone = {
-                        viewModel.verifyOtp(context){
+                        viewModel.verifyOtp(context) {
                             navController?.navigate(Screen.SetPasswordScreen.route)
                         }
 
@@ -330,13 +360,15 @@ fun OTPView(modifier: Modifier = Modifier, navController: NavController? = null,
 
 @Preview(showBackground = true)
 @Composable
-fun AppBar() {
-    val interactionSource = remember { MutableInteractionSource() }
+fun AppBar(navController: NavController? = null) {
     val backPainter = painterResource(id = R.drawable.back_btn)
     val helpPainter = painterResource(id = R.drawable.help_icon)
+    val interactionSource = remember { MutableInteractionSource() }
+    val context = LocalContext.current
     Row(
         Modifier
             .fillMaxWidth()
+//            .padding(start = PADDING,end = PADDING)
             .height(80.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
@@ -346,13 +378,21 @@ fun AppBar() {
             contentDescription = "back button",
             modifier = Modifier
                 .size(32.dp)
-                .padding(5.dp)
+                .clickable(
+                    indication = null,
+                    interactionSource = interactionSource
+                ) {
+                    (context as LoginActivity).onBackPressedDispatcher.onBackPressed()
+                }
         )
         Row(verticalAlignment = Alignment.CenterVertically) {
             Image(
                 painter = helpPainter,
-                contentDescription = "back button",
+                contentDescription = "help",
                 modifier = Modifier
+                    .clickable {
+                        navController?.navigate(Screen.HelpCenterScreen.route)
+                    }
                     .size(32.dp)
                     .padding(2.dp)
             )

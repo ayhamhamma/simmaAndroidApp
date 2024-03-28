@@ -52,6 +52,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDirection
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -67,6 +68,7 @@ import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
 import com.simma.simmaapp.R
 import com.simma.simmaapp.model.cartResponseModel.Item
+import com.simma.simmaapp.model.myOrdersModel.PaymentMethod
 import com.simma.simmaapp.presentation.homePage.HomeActivity
 import com.simma.simmaapp.presentation.homePage.ui.theme.Yellow
 import com.simma.simmaapp.presentation.homeScreen.HomeScreens
@@ -77,11 +79,14 @@ import com.simma.simmaapp.presentation.theme.Dimen.PADDING
 import com.simma.simmaapp.presentation.theme.ErrorColor
 import com.simma.simmaapp.presentation.theme.ShadowGrey
 import com.simma.simmaapp.presentation.theme.checkoutLightText
+import com.simma.simmaapp.utils.Constants
 import com.simma.simmaapp.utils.Constants.APPLY_DISCOUNT
 import com.simma.simmaapp.utils.Constants.CART_URL
 import com.simma.simmaapp.utils.Constants.DISCOUNT_CODE
+import com.simma.simmaapp.utils.Constants.EXTRACTION_CODE
 import com.simma.simmaapp.utils.Constants.MERCHANT_ID
 import com.simma.simmaapp.utils.Constants.selectedUrl
+import com.simma.simmaapp.utils.Helpers.formatNumber
 import com.simma.simmaapp.utils.ModifierUtil.dropShadow
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
@@ -102,7 +107,7 @@ fun CartScreen(
             AppBar(navController!!)
             LazyColumn(modifier = Modifier.padding(bottom = 60.dp)) {
                 items(viewModel.listState.size) {
-                    CartItems(item = viewModel.listState[it])
+                    CartItems(item = viewModel.listState[it], navController = navController)
                 }
             }
         }
@@ -184,7 +189,6 @@ fun AppBar(navController: NavController) {
                     navController.navigate(
                         HomeScreens.WebViewScreen.withArgs(
                             url,
-                            "window.CartVue.carts",
                             cartUrl,
                             MERCHANT_ID
                         )
@@ -206,7 +210,7 @@ fun AppBar(navController: NavController) {
 
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
-fun CartItems(modifier: Modifier = Modifier, item: Item) {
+fun CartItems(modifier: Modifier = Modifier, item: Item, navController: NavController? = null ) {
     val painter = painterResource(id = R.drawable.product_img)
     val editPainter = painterResource(id = R.drawable.edit_icon)
     Column(modifier = Modifier.padding(start = PADDING, end = PADDING, top = PADDING)) {
@@ -217,7 +221,7 @@ fun CartItems(modifier: Modifier = Modifier, item: Item) {
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 GlideImage(
-                    model = "http:" + item.imageUrl,
+                    model = if(item.imageUrl.startsWith("http"))item.imageUrl else "http:" + item.imageUrl,
                     loading = placeholder(R.drawable.light_grey_shape),
                     contentDescription = "Image", modifier = Modifier
                         .clip(
@@ -235,8 +239,9 @@ fun CartItems(modifier: Modifier = Modifier, item: Item) {
                 Column {
                     Row(modifier = Modifier.fillMaxWidth(.5f)) {
                         Text(
-                            text = item.name.split("\\s+".toRegex())[0] + " " + item.name.split("\\s+".toRegex())[1] + "...",
+                            text = item.name,
                             maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
                             style = TextStyle(
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight(700),
@@ -275,7 +280,7 @@ fun CartItems(modifier: Modifier = Modifier, item: Item) {
                         )
                     )
                     Text(
-                        text = "Quantity: ${item.quantity}",
+                        text = "Quantity: ${formatNumber(item.quantity.toString())}",
                         style = TextStyle(
                             fontSize = 15.sp,
                             fontWeight = FontWeight(400),
@@ -296,7 +301,36 @@ fun CartItems(modifier: Modifier = Modifier, item: Item) {
                     Modifier
                         .clip(
                             RoundedCornerShape(8.dp)
-                        )
+                        ).clickable{
+                            val url = URLEncoder.encode(
+                                CART_URL,
+                                StandardCharsets.UTF_8.toString()
+                            )
+                            val encodedCartUrl =
+                                URLEncoder.encode(
+                                    CART_URL,
+                                    StandardCharsets.UTF_8.toString()
+                                )
+                            navController?.navigate(
+                                HomeScreens.WebViewScreen.withArgs(
+                                    url,
+                                    encodedCartUrl,
+                                    MERCHANT_ID
+                                )
+                            ){
+                                popUpTo(HomeScreens.WebViewScreen.route) {
+                                    inclusive = true
+                                }
+                            }
+//                            Constants.PAYMENT_METHODS = paymentMethodList.map {
+//                                com.vs.simma.model.listingModel.PaymentMethod(
+//                                    _id = it._id,
+//                                    active = it.active,
+//                                    freeDelivery = it.freeDelivery,
+//                                    name = it.name
+//                                )
+//                            }
+                        }
                         .background(CheckoutAppBarColor)
                         .padding(5.dp)
                         .size(20.dp)
@@ -310,7 +344,7 @@ fun CartItems(modifier: Modifier = Modifier, item: Item) {
                         color = checkoutLightText,
                     )
                     Text(
-                        text = item.iqdPrice.toString(),
+                        text = formatNumber(item.iqdPrice.toString()),
                         fontSize = 16.sp,
                         fontWeight = FontWeight(700),
                         color = checkoutLightText,
@@ -400,7 +434,8 @@ fun ExpandableBottomBar(
                                 viewModel.applyColor = Color(0xFF999999)
                             }
                         }, hint = "Do you have a discount code?",
-                        text = viewModel.discountText
+                        text = viewModel.discountText,
+                        isError = viewModel.discountError
                     )
                     Box(
                         modifier = Modifier
@@ -408,9 +443,9 @@ fun ExpandableBottomBar(
                             .weight(1f) // Takes 1 out of 4 parts
                             .clip(RoundedCornerShape(8.dp))
                             .clickable {
-                                if(!APPLY_DISCOUNT.value){
+                                if (!APPLY_DISCOUNT.value) {
                                     viewModel.applyDiscount()
-                                }else{
+                                } else {
                                     APPLY_DISCOUNT.value = false
                                 }
                             }
@@ -430,7 +465,7 @@ fun ExpandableBottomBar(
                     }
                 }
                 if (viewModel.discountError) {
-                    Spacer(modifier = Modifier.size(10.dp))
+//                    Spacer(modifier = Modifier.size(10.dp))
                     Row(
                         horizontalArrangement = Arrangement.Start,
                         verticalAlignment = Alignment.CenterVertically
@@ -516,7 +551,7 @@ fun ExpandableBottomBar(
                             color = Color(0xFF2D2D2D),
                         )
                         Text(
-                            text = viewModel.grandTotal,
+                            text = formatNumber(viewModel.grandTotal),
                             fontSize = 20.sp,
                             fontWeight = FontWeight(700),
                             color = Color(0xFF2D2D2D),
@@ -545,7 +580,7 @@ fun ExpandableBottomBar(
 @Preview(showBackground = true)
 @Composable
 fun BottomButton(modifier: Modifier = Modifier, text: String = "View Cart") {
-    val painter = painterResource(id = R.drawable.simma_logo)
+    val painter = painterResource(id = R.drawable.proceed_arrow)
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(15.dp))
@@ -559,10 +594,8 @@ fun BottomButton(modifier: Modifier = Modifier, text: String = "View Cart") {
                 contentDescription = text,
                 Modifier.align(Alignment.CenterVertically)
             )
-            Spacer(modifier = Modifier.width(10.dp))
             Box(
                 modifier = Modifier
-                    .background(Color.DarkGray)
                     .height(30.dp)
                     .width(1.dp)
             )
@@ -615,7 +648,7 @@ fun DetailsItem(
                 )
             }
             Text(
-                text = value,
+                text = formatNumber(value),
                 style = TextStyle(
                     fontSize = 16.sp,
                     fontWeight = FontWeight(400),
@@ -633,7 +666,8 @@ fun OutlinedTextField(
     modifier: Modifier,
     hint: String = "",
     onTextChange: (String) -> Unit,
-    text: String
+    text: String,
+    isError : Boolean
 ) {
     val interactionSource = remember { MutableInteractionSource() }
 
@@ -668,7 +702,7 @@ fun OutlinedTextField(
             container = {
                 OutlinedTextFieldDefaults.ContainerBox(
                     enabled = true,
-                    isError = false,
+                    isError = isError,
                     interactionSource = interactionSource,
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = Yellow, // You can adjust the color as needed

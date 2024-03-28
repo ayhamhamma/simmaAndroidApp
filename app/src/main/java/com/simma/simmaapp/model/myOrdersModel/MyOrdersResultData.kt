@@ -1,13 +1,13 @@
 package com.simma.simmaapp.model.myOrdersModel
 
 data class MyOrdersResultData(
-    val __v: Int,
+    val __v: Double,
     val _id: String,
     val commission: Commission,
     val createdAt: String,
     val delivery: Delivery,
     val deliveryPartner: DeliveryPartner,
-    val discounts: List<Any>,
+    val discounts: List<DiscountModel>,
     val externalStatus: String,
     val financialStatus: String,
     val grandTotal: Double,

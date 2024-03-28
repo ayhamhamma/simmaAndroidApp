@@ -92,6 +92,7 @@ import com.simma.simmaapp.presentation.theme.Yellow200
 import com.simma.simmaapp.presentation.theme.checkoutLightText
 import com.simma.simmaapp.utils.Constants.PAYMENT_METHODS
 import com.simma.simmaapp.utils.Constants.WALLET_SELECTED
+import com.simma.simmaapp.utils.Helpers.formatNumber
 import com.simma.simmaapp.utils.ModifierUtil.dropShadow
 
 @Preview(showBackground = true)
@@ -135,7 +136,7 @@ fun DeliveryAndPaymentScreen(
 
     val viewModel: DeliveryAndPaymentViewModel = hiltViewModel()
     var isOneSelected by remember {
-        mutableStateOf(true)
+        mutableStateOf(false)
     }
     var isTwoSelected by remember {
         mutableStateOf(false)
@@ -209,7 +210,7 @@ fun DeliveryAndPaymentScreen(
                             color = Black500,
                         )
                         Text(
-                            text = viewModel.deliveryFees,
+                            text = formatNumber(viewModel.deliveryFees),
                             fontSize = 16.sp,
                             fontFamily = FontFamily(Font(R.font.font_med)),
                             fontWeight = FontWeight(860),
@@ -267,16 +268,6 @@ fun DeliveryAndPaymentScreen(
                             )
                     }
                 }
-//                if (showHint) {
-//                    Text(
-//                        text = "Detailed Address",
-//                        fontSize = 16.sp,
-//                        fontWeight = FontWeight(500),
-//                        fontFamily = FontFamily(Font(R.font.font_med)),
-//                        color = LightGrey,
-//                        modifier = Modifier.padding(top = 16.dp, start = 16.dp)
-//                    )
-//                }
 
             }
 
@@ -311,6 +302,7 @@ fun DeliveryAndPaymentScreen(
                             PAYMENT_METHODS.find { it.name == "wallet" }!!.freeDelivery
                         viewModel.calculateDelivery()
                         WALLET_SELECTED = true
+                        viewModel.noPaymentMethodSelected = false
                     },
                     freeDelivery = PAYMENT_METHODS.find { it.name == "wallet" }!!.freeDelivery
                 )
@@ -338,6 +330,7 @@ fun DeliveryAndPaymentScreen(
                             PAYMENT_METHODS.find { it.name == "cashOnDelivery" }!!.freeDelivery
                         viewModel.calculateDelivery()
                         WALLET_SELECTED = false
+                        viewModel.noPaymentMethodSelected = false
                     },
                     freeDelivery = PAYMENT_METHODS.find { it.name == "cashOnDelivery" }!!.freeDelivery
                 )
@@ -494,7 +487,7 @@ fun PaymentItem(
                             color = ErrorColor,
                         )
                         Text(
-                            text = discount,
+                            text = formatNumber(discount),
                             fontFamily = FontFamily(Font(R.font.font_med)),
                             fontSize = 12.sp,
                             fontWeight = FontWeight(400),
@@ -529,7 +522,7 @@ fun PaymentItem(
 
                         )
                     Text(
-                        text = walletBalance,
+                        text = formatNumber(walletBalance),
                         fontSize = 14.sp,
                         fontFamily = FontFamily(Font(R.font.font_med)),
                         fontWeight = FontWeight.Bold,
@@ -550,7 +543,7 @@ fun PaymentItem(
 @Preview(showBackground = true)
 @Composable
 fun BottomButton(modifier: Modifier = Modifier, text: String = "View Cart") {
-    val painter = painterResource(id = R.drawable.simma_logo)
+    val painter = painterResource(id = R.drawable.proceed_arrow)
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(15.dp))
@@ -564,10 +557,8 @@ fun BottomButton(modifier: Modifier = Modifier, text: String = "View Cart") {
                 contentDescription = text,
                 Modifier.align(Alignment.CenterVertically)
             )
-            Spacer(modifier = Modifier.width(10.dp))
             Box(
                 modifier = Modifier
-                    .background(Color.DarkGray)
                     .height(30.dp)
                     .width(1.dp)
             )

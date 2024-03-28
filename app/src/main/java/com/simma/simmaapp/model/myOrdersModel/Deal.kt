@@ -6,6 +6,6 @@ data class Deal(
     val description: Description,
     val id: String,
     val isActive: Boolean,
-    val orderSort: Int,
+    val orderSort: Double,
     val updatedAt: String
 )

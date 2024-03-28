@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.simma.simmaapp.R
 import com.simma.simmaapp.presentation.homePage.HomeActivity
+import com.simma.simmaapp.presentation.loginScreen.LoginActivity
 import com.simma.simmaapp.presentation.theme.CheckoutAppBarColor
 import com.simma.simmaapp.presentation.theme.Dimen.PADDING
 import com.simma.simmaapp.presentation.theme.MedDarkGrey
@@ -179,7 +180,11 @@ fun AppBar() {
                         interactionSource = interactionSource,
                         indication = null
                     ) {
-                        (context as HomeActivity).onBackPressedDispatcher.onBackPressed()
+                        try {
+                            (context as HomeActivity).onBackPressedDispatcher.onBackPressed()
+                        }catch (e:ClassCastException){
+                            (context as LoginActivity).onBackPressedDispatcher.onBackPressed()
+                        }
                     },
                 tint = MedDarkGrey
             )
